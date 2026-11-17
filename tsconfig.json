@@ -13,6 +13,6 @@
     "checkJs": false,
     "types": ["node", "vite/client"]
   },
-  "include": ["apps", "packages", "infra/**/*.ts", "tests/**/*.ts"],
+  "include": ["apps", "packages", "infra/**/*.ts", "tests/**/*.ts", "server.ts"],
   "exclude": ["node_modules", "legacy"]
 }

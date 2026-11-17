@@ -51,12 +51,12 @@ export class DisabledProvider implements RankProvider {
     throw new AppError(503, 'PROVIDER_UNAVAILABLE');
   }
 }
-export function productionProvider(): RankProvider {
-  if (process.env.RANK_PROVIDER === 'local_chrome_preview') {
+export function productionProvider(env: Record<string, string | undefined> = process.env): RankProvider {
+  if (env.RANK_PROVIDER === 'local_chrome_preview') {
     if (!localPreviewEnabled()) throw Error('Local Chrome preview requires explicit local-only testing configuration');
     return new LocalChromePreviewProvider();
   }
-  if (process.env.RANK_PROVIDER && process.env.RANK_PROVIDER !== 'disabled')
+  if (env.RANK_PROVIDER && env.RANK_PROVIDER !== 'disabled')
     throw Error('No commercially authorized adapter is installed');
   return new DisabledProvider();
 }

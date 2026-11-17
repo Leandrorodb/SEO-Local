@@ -80,13 +80,13 @@ export function QuickMeasure() {
   const selected = newCompany ? undefined : w.locations.find((item) => item.id === w.location);
   const source = useQuery({
     queryKey: ['quick-provider', w.org],
-    enabled: Boolean(w.org),
+    enabled: w.signed && Boolean(w.org),
     queryFn: () => api<ProviderStatus>('/provider/status', w.org),
     refetchInterval: 15000,
   });
   const terms = useQuery({
     queryKey: ['quick-terms', w.org, w.location],
-    enabled: Boolean(w.org && w.location),
+    enabled: w.signed && Boolean(w.org && w.location),
     queryFn: () => api<Keyword[]>(`/locations/${w.location}/keywords`, w.org),
   });
   const active = terms.data?.filter((x) => x.status === 'ACTIVE').length ?? 0;
@@ -94,12 +94,12 @@ export function QuickMeasure() {
   const overLocalLimit = active * (mode === 'single' ? 1 : 25) > 100;
   const niches = useQuery({
     queryKey: ['quick-niches', w.org],
-    enabled: Boolean(w.org && w.role !== 'client_viewer'),
+    enabled: w.signed && Boolean(w.org && w.role !== 'client_viewer'),
     queryFn: () => api<{ value: string; title: string }[]>('/niches', w.org),
   });
   const progress = useQuery({
     queryKey: ['quick-audit', w.org, runId],
-    enabled: !!runId,
+    enabled: w.signed && !!runId,
     queryFn: () => api<AuditProgress>(`/audits/${runId}`, w.org),
     refetchInterval: (query) => {
       const state = query.state.data?.status;
@@ -109,7 +109,7 @@ export function QuickMeasure() {
   const finished = ['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED'].includes(progress.data?.status ?? '');
   const results = useQuery({
     queryKey: ['quick-rankings', w.org, w.location, runId, progress.data?.status],
-    enabled: Boolean(runId && finished && w.location),
+    enabled: w.signed && Boolean(runId && finished && w.location),
     queryFn: () => api<Ranking>(`/locations/${w.location}/rankings`, w.org),
   });
 
@@ -308,16 +308,40 @@ export function QuickMeasure() {
     <div className="quick-steps" aria-label="Etapas de medição">
       <span>01 · Identificar ficha</span><span>02 · Gerar termos</span><span>03 · Medir</span><span>04 · Ver resultado</span>
     </div>
-    <div className="quick-summary" role="status">
-      <strong>Motor de medição: {source.isLoading ? 'Verificando…' : source.data?.canMeasureMaps ? 'Configurado para teste local (Chrome ainda não verificado)' : 'Indisponível'}</strong>
-      <small>{source.data?.mode === 'LOCAL_EXPERIMENTAL'
-        ? 'Chrome local experimental · sem API paga · depende do PC ligado; resultados podem ser inconclusivos.'
-        : source.data?.reason === 'PROVIDER_NOT_CONFIGURED'
-          ? 'Ative e configure o coletor local antes de tentar medir. Nenhuma posição será inventada.'
-          : source.data?.reason === 'RUNTIME_RESTRICTED'
-            ? 'O coletor local só pode funcionar na homologação do próprio computador.'
-            : source.error ? errorText(source.error) : 'Consultando o backend seguro.'}</small>
-      <button type="button" disabled={source.isFetching} onClick={() => void source.refetch()}>Atualizar configuração do medidor</button>
+    <div className="quick-summary" role="region" aria-label="Status do motor de medição">
+      <strong>
+        Motor de medição:{' '}
+        {!w.signed
+          ? 'Aguardando PostgreSQL e autenticação OIDC'
+          : source.isLoading
+            ? 'Verificando…'
+            : source.data?.canMeasureMaps
+              ? 'Configurado para teste local (Chrome ainda não verificado)'
+              : 'Indisponível'}
+      </strong>
+      <small>
+        {!w.signed
+          ? 'Modo Preview de Interface: nenhuma medição é simulada. Conecte o banco e entre via OIDC para consultar o provedor.'
+          : source.data?.mode === 'LOCAL_EXPERIMENTAL'
+            ? 'Chrome local experimental · sem API paga · depende do PC ligado; resultados podem ser inconclusivos.'
+            : source.data?.reason === 'PROVIDER_NOT_CONFIGURED'
+              ? 'Ative e configure o coletor local antes de tentar medir. Nenhuma posição será inventada.'
+              : source.data?.reason === 'RUNTIME_RESTRICTED'
+                ? 'O coletor local só pode funcionar na homologação do próprio computador.'
+                : source.error
+                  ? errorText(source.error)
+                  : 'Consultando o backend seguro.'}
+      </small>
+      <button
+        type="button"
+        disabled={source.isFetching || busy}
+        onClick={() => {
+          if (w.signed) void source.refetch();
+          else void run(() => api<ProviderStatus>('/provider/status', w.org), 'Configuração consultada.');
+        }}
+      >
+        Atualizar configuração do medidor
+      </button>
     </div>
     {issue && <div className="error" role="alert">{issue}</div>}
     <Panel title="01 · Qual empresa vamos medir?">

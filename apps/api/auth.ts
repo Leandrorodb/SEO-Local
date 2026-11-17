@@ -4,6 +4,7 @@ import type pg from 'pg';
 import { transaction, type Tx } from '../../packages/db/index.js';
 import { AppError, requireThat } from '../../packages/domain/errors.js';
 import { uuid } from '../../packages/contracts/index.js';
+import { isPlaceholderValue } from './runtime-config.js';
 export type Principal = {
   id: string;
   subject: string;
@@ -20,24 +21,28 @@ export class Authenticator {
     private key: JWTVerifyGetKey,
     private mfaAcr = '',
   ) {}
-  static fromEnv() {
+  static fromEnv(env: Record<string, string | undefined> = process.env) {
     for (const k of ['OIDC_ISSUER', 'OIDC_AUDIENCE', 'OIDC_JWKS_URL'])
-      if (!process.env[k]) throw Error(k + ' required');
-    const url = new URL(process.env.OIDC_JWKS_URL!);
+      if (!env[k]) throw Error(k + ' required');
+    const issuerUrl = new URL(env.OIDC_ISSUER!);
+    const url = new URL(env.OIDC_JWKS_URL!);
+    if (isPlaceholderValue(issuerUrl.hostname) || isPlaceholderValue(url.hostname)) {
+      throw Error('OIDC configuration uses a placeholder host');
+    }
     // The production trust boundary ALWAYS requires HTTPS. A locally hosted
     // development IdP is permitted only with an explicit opt-in and exact
     // loopback issuer + JWKS address. Never allow a remote HTTP JWKS.
     const localDev =
-      process.env.NODE_ENV === 'development' &&
-      process.env.LRT_LOCAL_OIDC === 'I_UNDERSTAND_LOCAL_TEST_ONLY' &&
-      process.env.OIDC_ISSUER === 'http://127.0.0.1:4181' &&
+      env.NODE_ENV === 'development' &&
+      env.LRT_LOCAL_OIDC === 'I_UNDERSTAND_LOCAL_TEST_ONLY' &&
+      env.OIDC_ISSUER === 'http://127.0.0.1:4181' &&
       url.href === 'http://127.0.0.1:4181/jwks';
     if (url.protocol !== 'https:' && !localDev) throw Error('JWKS requires HTTPS');
     return new Authenticator(
-      process.env.OIDC_ISSUER!,
-      process.env.OIDC_AUDIENCE!,
+      env.OIDC_ISSUER!,
+      env.OIDC_AUDIENCE!,
       createRemoteJWKSet(url),
-      process.env.OIDC_MFA_ACR,
+      env.OIDC_MFA_ACR,
     );
   }
   async authenticate(req: FastifyRequest, pool: pg.Pool): Promise<Principal> {

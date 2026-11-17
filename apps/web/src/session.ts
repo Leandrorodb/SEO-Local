@@ -1,11 +1,20 @@
 import { UserManager, WebStorageStateStore, InMemoryWebStorage } from 'oidc-client-ts';
+import {
+  formatAuthFetchError,
+  isNetworkFetchError,
+  validateOidcConfig,
+} from './auth-config';
+
 const authority = import.meta.env.VITE_OIDC_AUTHORITY,
   client = import.meta.env.VITE_OIDC_CLIENT_ID;
-export const identityConfigured = Boolean(authority && client);
+const oidcValidation = validateOidcConfig(authority, client);
+export const identityConfigured = oidcValidation.configured;
+export const identityIssue = oidcValidation.issue;
+export const oidcAuthority = authority?.trim() ?? '';
 export const identity = identityConfigured
   ? new UserManager({
-      authority,
-      client_id: client,
+      authority: oidcAuthority,
+      client_id: client!.trim(),
       redirect_uri: location.origin + '/auth/callback',
       post_logout_redirect_uri: location.origin,
       response_type: 'code',
@@ -29,6 +38,16 @@ export class ApiError extends Error {
   }
 }
 const messages: Record<string, string> = {
+  API_UNAVAILABLE:
+    'A API do Local Rank Tracker não está acessível. Verifique se o servidor integrado e o PostgreSQL (DATABASE_URL) estão iniciados.',
+  DATABASE_UNAVAILABLE:
+    'O PostgreSQL externo (DATABASE_URL com role restrita lrt_app) não está acessível ou ainda usa valores de exemplo.',
+  MIGRATIONS_PENDING:
+    'PostgreSQL conectado, mas as tabelas do sistema ainda não foram criadas. Execute npm run db:migrate com MIGRATION_DATABASE_URL.',
+  OIDC_NOT_CONFIGURED:
+    'A autenticação OIDC do servidor (OIDC_ISSUER, OIDC_JWKS_URL, OIDC_AUDIENCE) ainda não foi configurada.',
+  BACKEND_NOT_READY:
+    'O backend Fastify aguarda configuração completa do PostgreSQL e do provedor OIDC para liberar rotas /v1.',
   LICENSE_SUSPENDED: 'A licença está suspensa ou o período pago encerrou. Procure o administrador.',
   MFA_REQUIRED: 'Entre novamente usando a verificação em duas etapas.',
   REAUTHENTICATION_REQUIRED: 'Esta ação exige uma autenticação recente. Entre novamente.',
@@ -61,13 +80,18 @@ const messages: Record<string, string> = {
 
   INTERNAL_ERROR: 'O servidor encontrou um erro ao processar a solicitação. Consulte o registro da API.',
 };
+export const authErrorText = (e: unknown) =>
+  formatAuthFetchError(e, oidcAuthority, location.origin) ?? errorText(e);
+
 export const errorText = (e: unknown) =>
   e instanceof ApiError
     ? (messages[e.code] ?? e.code) + (e.code === 'INTERNAL_ERROR' && e.requestId
       ? ` (solicitação ${e.requestId})` : '')
-    : e instanceof Error
-      ? e.message
-      : 'Não foi possível concluir a operação.';
+    : isNetworkFetchError(e)
+      ? messages.API_UNAVAILABLE
+      : e instanceof Error
+        ? e.message
+        : 'Não foi possível concluir a operação.';
 export async function api<T>(
   url: string,
   org: string,

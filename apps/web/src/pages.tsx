@@ -5,6 +5,7 @@ import { api, downloadPdf, errorText } from './session';
 import { useWorkspace, PageTitle, LocationPicker } from './main';
 import { Empty, Panel, Badge, Table } from '../../../packages/ui/index';
 import type { Location, Keyword, Grid, Run, Ranking, Report, Organization, Rank } from './types';
+import { PLAN_STRUCTURE_TEMPLATES, buildRelativeGeoGridLayout } from './preview-mode';
 const date = (s: string) => new Date(s).toLocaleString('pt-BR');
 const usd = (micros: number) =>
   new Intl.NumberFormat('pt-BR', {
@@ -66,16 +67,32 @@ function QueryState({
 }
 function NeedLocation({ children }: { children: ReactNode }) {
   const w = useWorkspace();
+  if (w.location) {
+    return (
+      <>
+        <LocationPicker />
+        {children}
+      </>
+    );
+  }
+  if (!w.signed && w.previewMode) {
+    return (
+      <>
+        <LocationPicker />
+        <p className="muted" style={{ marginTop: '-8px', marginBottom: '18px' }}>
+          Preview de interface sem unidade conectada · listas e métricas ficam vazias até autenticar
+          com PostgreSQL e OIDC.
+        </p>
+        {children}
+      </>
+    );
+  }
   return (
     <>
       <LocationPicker />
-      {w.location ? (
-        children
-      ) : (
-        <Empty title="Selecione uma unidade">
-          Cadastre uma ficha em Empresas e unidades para continuar.
-        </Empty>
-      )}
+      <Empty title="Selecione uma unidade">
+        Cadastre uma ficha em Empresas e unidades para continuar.
+      </Empty>
     </>
   );
 }
@@ -105,7 +122,7 @@ export function Locations() {
     } | null>(null);
   const brands = useQuery({
     queryKey: ['brands', w.org],
-    enabled: !!w.org && w.role !== 'client_viewer',
+    enabled: w.signed && !!w.org && w.role !== 'client_viewer',
     queryFn: () => api<{ id: string; name: string }[]>('/brands', w.org),
   });
   async function lookup() {
@@ -357,7 +374,7 @@ export function Terms() {
   const terms = useQuery({
     queryKey: ['terms', w.org, w.location],
     queryFn: () => api<Keyword[]>('/locations/' + w.location + '/keywords', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   const [niche, setNiche] = useState('auto');
   const [products, setProducts] = useState('');
@@ -365,7 +382,7 @@ export function Terms() {
   const [discoveryNotice, setDiscoveryNotice] = useState('');
   const niches = useQuery({
     queryKey: ['niches', w.org],
-    enabled: !!w.org && w.role !== 'client_viewer',
+    enabled: w.signed && !!w.org && w.role !== 'client_viewer',
     queryFn: () => api<{ value: string; title: string }[]>('/niches', w.org),
   });
   return (
@@ -610,12 +627,12 @@ export function Audits() {
   const grids = useQuery({
     queryKey: ['grids', w.org, w.location],
     queryFn: () => api<Grid[]>('/locations/' + w.location + '/grids', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   const runs = useQuery({
     queryKey: ['runs', w.org, w.location],
     queryFn: () => api<Run[]>('/locations/' + w.location + '/audits', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
     refetchInterval: 5000,
   });
   const selected = grids.data?.find((g) => g.id === gridId) ?? grids.data?.[0];
@@ -693,10 +710,10 @@ export function Audits() {
                 ))}
               </select>
             </label>
-            {selected && (
+            {selected ? (
               <div className="coordinate-grid">
                 {selected.points.map((p) => (
-                  <div key={p.sequence}>
+                  <div key={p.sequence} className={p.sequence === 12 ? 'center-point' : ''}>
                     <strong>P{p.sequence + 1}</strong>
                     <small>
                       {p.lat.toFixed(4)}
@@ -706,10 +723,38 @@ export function Audits() {
                   </div>
                 ))}
               </div>
+            ) : gridMode === 'grid5x5' ? (
+              <>
+                <div
+                  className="coordinate-grid"
+                  aria-label="Prévia estrutural do GeoGrid 5 por 5"
+                >
+                  {buildRelativeGeoGridLayout(spacing).map((p) => (
+                    <div key={p.sequence} className={p.sequence === 12 ? 'center-point' : ''}>
+                      <strong>{p.label}</strong>
+                      <small>
+                        {p.sequence === 12
+                          ? 'Centro'
+                          : `${p.offsetNorthM >= 0 ? '+' : ''}${p.offsetNorthM}m N`}
+                        <br />
+                        {p.sequence === 12
+                          ? '0m, 0m'
+                          : `${p.offsetEastM >= 0 ? '+' : ''}${p.offsetEastM}m L`}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+                <p className="muted">
+                  Prévia geométrica de 25 pontos ({spacing || 500} m entre eixos). As coordenadas
+                  reais são calculadas no servidor somente a partir de uma unidade confirmada.
+                </p>
+              </>
+            ) : (
+              <p className="muted">
+                Escolha 1 ponto para medir vários termos ou alterne para GeoGrid 5×5 para
+                visualizar a malha de 25 pontos. O Chrome é experimental.
+              </p>
             )}
-            <p className="muted">
-              Escolha 1 ponto para medir vários termos ou 25 pontos para analisar cobertura geográfica. O Chrome é experimental.
-            </p>
           </Panel>
           <Panel title="Superfície e orçamento">
             <label>
@@ -832,7 +877,7 @@ export function Results() {
   const ranks = useQuery({
     queryKey: ['rankings', w.org, w.location],
     queryFn: () => api<Ranking>('/locations/' + w.location + '/rankings', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   const rows =
     ranks.data?.latest.filter(
@@ -1057,12 +1102,12 @@ const signalLabels: Record<string, string> = {
   UPCOMING_AUDIT: 'Próxima auditoria',
   MONTHLY_BUDGET: 'Orçamento da organização',
 };
-function AlertSettings() {
+export function AlertSettings() {
   const w = useWorkspace();
   const q = useQuery({
     queryKey: ['alert-rules', w.org, w.location],
     queryFn: () => api<RuleSettings>('/locations/' + w.location + '/alert-rules', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   if (!q.data) return null;
   return (
@@ -1109,7 +1154,7 @@ export function Insights({ kind }: { kind: 'competitors' | 'opportunities' }) {
   const q = useQuery({
     queryKey: [kind, w.org, w.location],
     queryFn: () => api<Insight[]>('/locations/' + w.location + '/' + kind, w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   const alerts = useQuery({
     queryKey: ['alerts', w.org, w.location],
@@ -1124,7 +1169,7 @@ export function Insights({ kind }: { kind: 'competitors' | 'opportunities' }) {
           isDemo?: boolean;
         }[]
       >('/locations/' + w.location + '/alerts', w.org),
-    enabled: !!w.location && kind === 'opportunities',
+    enabled: w.signed && !!w.location && kind === 'opportunities',
   });
   return (
     <>
@@ -1213,13 +1258,13 @@ export function Insights({ kind }: { kind: 'competitors' | 'opportunities' }) {
     </>
   );
 }
-function AgencyBranding() {
+export function AgencyBranding() {
   const w = useWorkspace();
   const branding = useQuery({
     queryKey: ['branding', w.org],
     queryFn: () =>
       api<{ displayName: string; logoBase64: string | null } | null>('/branding', w.org),
-    enabled: !!w.org,
+    enabled: w.signed && !!w.org,
   });
   const [logo, setLogo] = useState<string | null | undefined>(undefined);
   const currentLogo = logo === undefined ? branding.data?.logoBase64 : logo;
@@ -1279,12 +1324,12 @@ export function Reports() {
   const reports = useQuery({
     queryKey: ['reports', w.org, w.location],
     queryFn: () => api<Report[]>('/locations/' + w.location + '/reports', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   const runs = useQuery({
     queryKey: ['runs', w.org, w.location],
     queryFn: () => api<Run[]>('/locations/' + w.location + '/audits', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
     staleTime: 0,
     refetchInterval: 5000,
   });
@@ -1432,12 +1477,12 @@ export function Automation() {
           last_error: string | null;
         }[]
       >('/audit-schedules', w.org),
-    enabled: !!w.org,
+    enabled: w.signed && !!w.org,
   });
   const grids = useQuery({
     queryKey: ['grids', w.org, w.location],
     queryFn: () => api<Grid[]>('/locations/' + w.location + '/grids', w.org),
-    enabled: !!w.location,
+    enabled: w.signed && !!w.location,
   });
   async function save(e: FormEvent<HTMLFormElement>) {
     const b = values(e);
@@ -1549,6 +1594,11 @@ export function Automation() {
             </tr>
           ))}
         </Table>
+        {!schedules.data?.length && (
+          <Empty title="Nenhuma rotina salva">
+            Configure uma grade e periodicidade acima após conectar uma unidade autenticada.
+          </Empty>
+        )}
       </Panel>
     </>
   );
@@ -1625,6 +1675,11 @@ export function Team() {
               </tr>
             ))}
           </Table>
+          {!team.data?.length && (
+            <Empty title="Nenhum usuário vinculado na organização">
+              Os membros provisionados pelo proprietário e vinculados por papel aparecem aqui.
+            </Empty>
+          )}
         </QueryState>
       </Panel>
     </>
@@ -1646,17 +1701,17 @@ export function Billing() {
         };
         ledger: { state: string; units: number; cost: number; reserved: number }[];
       }>('/usage', w.org),
-    enabled: !!w.org,
+    enabled: w.signed && !!w.org,
   });
   return (
     <>
       <PageTitle
         eyebrow="CONTRATO E CONSUMO"
-        title="Faturamento"
+        title="Planos e faturamento"
         description="Período pago, limites e consumo registrados no servidor."
       />
       <QueryState pending={q.isLoading} error={q.error}>
-        {q.data && (
+        {q.data ? (
           <>
             <div className="stats">
               <div className="stat panel">
@@ -1694,8 +1749,58 @@ export function Billing() {
               </p>
             </Panel>
           </>
+        ) : (
+          <>
+            <div className="stats">
+              <div className="stat panel">
+                <span>Licença</span>
+                <strong>—</strong>
+                <small>Sem organização conectada</small>
+              </div>
+              <div className="stat panel">
+                <span>Fichas no plano</span>
+                <strong>0</strong>
+                <small>Definido no contrato</small>
+              </div>
+              <div className="stat panel">
+                <span>Termos ativos</span>
+                <strong>0</strong>
+                <small>Limite por organização</small>
+              </div>
+              <div className="stat panel">
+                <span>Consultas por mês</span>
+                <strong>0</strong>
+                <small>Apurado no livro de consumo</small>
+              </div>
+            </div>
+            <Panel title="Livro de consumo">
+              <Empty title="Nenhum consumo ou contrato carregado">
+                Os limites e o ledger real de consultas são exibidos quando há uma organização
+                autenticada no PostgreSQL.
+              </Empty>
+            </Panel>
+          </>
         )}
       </QueryState>
+      <Panel
+        title="Estrutura de planos do sistema"
+        subtitle="Perfis de licenciamento configuráveis pelo proprietário sem preços ou quotas inventadas."
+      >
+        <div className="three-columns">
+          {PLAN_STRUCTURE_TEMPLATES.map((tier) => (
+            <div className="plan-tier" key={tier.code}>
+              <span className="plan-tier-code">{tier.code}</span>
+              <h3>{tier.title}</h3>
+              <p className="muted">{tier.target}</p>
+              <ul>
+                {tier.highlights.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </Panel>
     </>
   );
 }
@@ -1705,10 +1810,12 @@ export function Owner() {
   const orgs = useQuery({
     queryKey: ['owner-orgs'],
     queryFn: () => api<Organization[]>('/platform/organizations', ''),
+    enabled: w.signed,
   });
   const plans = useQuery({
     queryKey: ['owner-plans'],
     queryFn: () => api<Plan[]>('/platform/plans', ''),
+    enabled: w.signed,
   });
   const [target, setTarget] = useState<Organization | null>(null);
   const [tab, setTab] = useState('orgs');
@@ -1719,7 +1826,7 @@ export function Owner() {
         '/platform/audit-logs',
         '',
       ),
-    enabled: tab === 'logs',
+    enabled: w.signed && tab === 'logs',
   });
   return (
     <>
@@ -1729,10 +1836,18 @@ export function Owner() {
         description="Provisionamento, contrato e trilha de ações. MFA e reautenticação são obrigatórios."
       />
       <div className="actions">
-        <button onClick={() => setTab('orgs')}>Organizações</button>
-        <button onClick={() => setTab('plans')}>Planos</button>
-        <button onClick={() => setTab('users')}>Usuários</button>
-        <button onClick={() => setTab('logs')}>Auditoria de segurança</button>
+        <button className={tab === 'orgs' ? 'primary' : ''} onClick={() => setTab('orgs')}>
+          Organizações
+        </button>
+        <button className={tab === 'plans' ? 'primary' : ''} onClick={() => setTab('plans')}>
+          Planos
+        </button>
+        <button className={tab === 'users' ? 'primary' : ''} onClick={() => setTab('users')}>
+          Usuários
+        </button>
+        <button className={tab === 'logs' ? 'primary' : ''} onClick={() => setTab('logs')}>
+          Auditoria de segurança
+        </button>
       </div>
       <QueryState pending={orgs.isLoading} error={orgs.error}>
         {tab === 'orgs' && (
@@ -1788,6 +1903,11 @@ export function Owner() {
                   </tr>
                 ))}
               </Table>
+              {!orgs.data?.length && (
+                <Empty title="Nenhuma organização carregada">
+                  Conecte o PostgreSQL e autentique como proprietário com MFA para listar contratos.
+                </Empty>
+              )}
             </Panel>
             {target && (
               <Panel title={'Licença · ' + target.name}>
@@ -1904,6 +2024,11 @@ export function Owner() {
                 </tr>
               ))}
             </Table>
+            {!logs.data?.length && (
+              <Empty title="Nenhum evento de auditoria carregado">
+                Os registros de segurança aparecem após autenticação OIDC do proprietário.
+              </Empty>
+            )}
           </Panel>
         )}
       </QueryState>

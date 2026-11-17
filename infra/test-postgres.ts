@@ -25,7 +25,14 @@ export class LocalPostgres extends EmbeddedPostgres {
       port: number;
     },
   ) {
-    super(config);
+    const runningAsRoot =
+      process.platform !== 'win32' &&
+      typeof process.getuid === 'function' &&
+      process.getuid() === 0;
+    super({
+      ...config,
+      createPostgresUser: config.createPostgresUser ?? runningAsRoot,
+    });
   }
   private async control(args: string[]) {
     const native = createRequire(require.resolve('embedded-postgres')).resolve(

@@ -1047,6 +1047,45 @@ test(
   },
 );
 
+test('Universal Maps registration is atomic, reuses existing CID and never leaves an orphan', async () => {
+  const s = app();
+  const cid = String(1000000000000 + Math.floor(Math.random() * 100000000));
+  const input = { mapsUrl: `https://www.google.com/maps?cid=${cid}`, externalId: cid };
+  try {
+    const first = await request(s, 'POST', '/v1/locations/register-confirmed', input);
+    assert.equal(first.statusCode, 201, first.body);
+    assert.equal(first.json().data.created, true);
+    assert.equal(first.json().data.location.identity_status, 'CONFIRMED');
+    const id = first.json().data.location.id;
+    const second = await request(s, 'POST', '/v1/locations/register-confirmed', input);
+    assert.equal(second.statusCode, 200, second.body);
+    assert.equal(second.json().data.created, false);
+    assert.equal(second.json().data.location.id, id);
+    const orphanCid = String(BigInt(cid) + 100000000n);
+    const orphan = await location(s, orphanCid);
+    assert.equal(orphan.identity_status, 'UNRESOLVED');
+    const repaired = await request(s, 'POST', '/v1/locations/register-confirmed', {
+      mapsUrl: `https://www.google.com/maps?cid=${orphanCid}`,
+      externalId: orphanCid,
+    });
+    assert.equal(repaired.statusCode, 200, repaired.body);
+    assert.equal(repaired.json().data.location.id, orphan.id);
+    assert.equal(repaired.json().data.location.identity_status, 'CONFIRMED');
+    const foreign = await request(s, 'POST', '/v1/locations/register-confirmed', input, 'other', ids.b);
+    assert.equal(foreign.statusCode, 201, foreign.body);
+    assert.notEqual(foreign.json().data.location.id, id);
+    const distinct = await request(s, 'POST', '/v1/locations/register-confirmed', {
+      mapsUrl: `https://www.google.com/maps?cid=${cid}7`,
+      externalId: 'not-the-found-cid',
+    });
+    assert.equal(distinct.statusCode, 409, distinct.body);
+    const records = (await request(s, 'GET', '/v1/locations')).json().data;
+    assert.equal(records.filter((x: { cid: string }) => x.cid === cid).length, 1);
+  } finally {
+    await s.close();
+  }
+});
+
 test(
   'Backup: stopped PostgreSQL physical backup restores records, immutable hashes and RLS',
   { timeout: 60000 },
@@ -1114,41 +1153,3 @@ test(
   },
 );
 
-test('Universal Maps registration is atomic, reuses existing CID and never leaves an orphan', async () => {
-  const s = app();
-  const cid = String(1000000000000 + Math.floor(Math.random() * 100000000));
-  const input = { mapsUrl: `https://www.google.com/maps?cid=${cid}`, externalId: cid };
-  try {
-    const first = await request(s, 'POST', '/v1/locations/register-confirmed', input);
-    assert.equal(first.statusCode, 201, first.body);
-    assert.equal(first.json().data.created, true);
-    assert.equal(first.json().data.location.identity_status, 'CONFIRMED');
-    const id = first.json().data.location.id;
-    const second = await request(s, 'POST', '/v1/locations/register-confirmed', input);
-    assert.equal(second.statusCode, 200, second.body);
-    assert.equal(second.json().data.created, false);
-    assert.equal(second.json().data.location.id, id);
-    const orphanCid = String(BigInt(cid) + 100000000n);
-    const orphan = await location(s, orphanCid);
-    assert.equal(orphan.identity_status, 'UNRESOLVED');
-    const repaired = await request(s, 'POST', '/v1/locations/register-confirmed', {
-      mapsUrl: `https://www.google.com/maps?cid=${orphanCid}`,
-      externalId: orphanCid,
-    });
-    assert.equal(repaired.statusCode, 200, repaired.body);
-    assert.equal(repaired.json().data.location.id, orphan.id);
-    assert.equal(repaired.json().data.location.identity_status, 'CONFIRMED');
-    const foreign = await request(s, 'POST', '/v1/locations/register-confirmed', input, 'other', ids.b);
-    assert.equal(foreign.statusCode, 201, foreign.body);
-    assert.notEqual(foreign.json().data.location.id, id);
-    const distinct = await request(s, 'POST', '/v1/locations/register-confirmed', {
-      mapsUrl: `https://www.google.com/maps?cid=${cid}7`,
-      externalId: 'not-the-found-cid',
-    });
-    assert.equal(distinct.statusCode, 409, distinct.body);
-    const records = (await request(s, 'GET', '/v1/locations')).json().data;
-    assert.equal(records.filter((x: { cid: string }) => x.cid === cid).length, 1);
-  } finally {
-    await s.close();
-  }
-});

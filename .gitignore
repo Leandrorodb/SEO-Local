@@ -21,3 +21,14 @@ work/
 coverage/
 *.tsbuildinfo
 
+# Firebase local caches and credentials
+.firebase/
+.aistudio/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+service-account*.json
+*-firebase-adminsdk-*.json
+functions/.env*
+!functions/.env.example
+

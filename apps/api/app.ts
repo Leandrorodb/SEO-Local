@@ -33,6 +33,7 @@ import { suggestKeywords as suggestAutomaticKeywords, listNiches } from '../../p
 import { registerAnalytics } from './analytics.js';
 import { registerOwner } from './owner.js';
 import { registerBranding } from './branding.js';
+import { collectHelmetConnectSrc, parseAllowedOrigins } from './runtime-config.js';
 import { captureOpenApi } from '../../packages/contracts/openapi.js';
 export const readers = ['org_admin', 'analyst', 'client_viewer'],
   writers = ['org_admin', 'analyst'];
@@ -88,13 +89,13 @@ export function buildApp(d: Dependencies) {
         scriptSrc: ["'self'"],
         styleSrc: ["'self'"],
         imgSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'", process.env.OIDC_ISSUER ?? 'https://invalid.local'],
+        connectSrc: collectHelmetConnectSrc(process.env),
         frameAncestors: ["'none'"],
       },
     },
   });
   app.register(cors, {
-    origin: d.webOrigin ?? 'http://localhost:5173',
+    origin: parseAllowedOrigins(d.webOrigin),
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Organization-Id', 'Idempotency-Key'],
     methods: ['GET', 'POST', 'PATCH'],
   });

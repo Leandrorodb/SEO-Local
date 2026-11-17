@@ -98,7 +98,11 @@ test('OIDC local: setup, PKCE, password+TOTP, RS256, rejeicao de replay e login 
     const info = await fetch('http://127.0.0.1:4181/userinfo', {headers:{Authorization:'Bearer '+token}});
     assert.equal((await info.json()).sub,'lrt-local-owner');
   } finally {
-    server?.kill('SIGINT');
-    rmSync(root, { recursive:true, force:true });
+    if (server && server.exitCode === null && server.signalCode === null) {
+      const stopped = new Promise(resolve => server.once('exit', resolve));
+      server.kill('SIGINT');
+      await stopped;
+    }
+    rmSync(root, { recursive:true, force:true, maxRetries: 5, retryDelay: 100 });
   }
 });

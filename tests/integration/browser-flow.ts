@@ -138,7 +138,10 @@ export async function browserFlow(
       port: 0,
       watch: null,
       hmr: false,
-      proxy: { '/v1': `http://127.0.0.1:${apiAddress.port}` },
+      proxy: {
+        '/v1': `http://127.0.0.1:${apiAddress.port}`,
+        '/health': `http://127.0.0.1:${apiAddress.port}`,
+      },
     },
   });
   await vite.listen();
@@ -201,7 +204,8 @@ export async function browserFlow(
     await page.getByRole('button', { name: 'Ativar', exact: true }).click();
     await expect(page.getByText('ACTIVE', { exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Nova auditoria' }).click();
-    await page.getByRole('button', { name: 'Criar grade' }).click();
+    await page.getByLabel('Tipo de medição').selectOption('grid5x5');
+    await page.getByRole('button', { name: 'Criar GeoGrid 5×5' }).click();
     await page.getByRole('button', { name: 'Calcular consultas e custo' }).click();
     await expect(page.getByText('25 consultas', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar e medir agora' }).click();
