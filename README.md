@@ -1,7 +1,8 @@
 # SEO-Local — migração Firebase em andamento
 
-**17/11/2026:** interface hospedada para acompanhamento; backend Firebase e
-medição real ainda não publicados. Leia o [estado atual](docs/FIREBASE_STATUS.md)
+**17/11/2026:** frontend Firebase e backend Render Free publicados, com conexão
+real ao Firestore. Login administrativo/MFA e fluxo completo em validação.
+Leia o [estado atual](docs/ESTADO_PUBLICACAO_ATUAL.md)
 e o [prompt de continuidade](docs/PROMPT_CONTINUIDADE_ANTIGRAVITY.md).
 
 Site: https://seo-local-64b17.web.app. A documentação abaixo descreve o legado.

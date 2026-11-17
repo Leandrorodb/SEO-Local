@@ -228,7 +228,7 @@ export class LocalChromePreviewProvider implements RankProvider {
   async resolveWithDiagnostics(link: string): Promise<ResolveDiagnostics> {
     if (!localPreviewEnabled()) return { status: 'PROVIDER_UNAVAILABLE', candidates: [] };
     const parsed = parseMapsUrl(link);
-    if (this.lookupBusy) return { status: 'MAPS_BROWSER_BUSY', candidates: [] };
+    if (this.lookupBusy || this.busy) return { status: 'MAPS_BROWSER_BUSY', candidates: [] };
     this.lookupBusy = true;
     let page: Page | null = null;
     let phase: 'BROWSER' | 'NAVIGATE' | 'EXTRACT' = 'BROWSER';
@@ -240,7 +240,7 @@ export class LocalChromePreviewProvider implements RankProvider {
       const ctx = await this.browser();
       // launchPersistentContext opens a blank tab. Reuse it instead of showing
       // an extra permanent about:blank window to the operator.
-      page = ctx.pages().find((tab) => tab.url() === 'about:blank') ?? await ctx.newPage();
+      page = ctx.pages().find((tab) => !tab.isClosed()) ?? await ctx.newPage();
       phase = 'NAVIGATE';
       await page.goto(parsed.url, { waitUntil: 'domcontentloaded', timeout: 35000 }).catch((error) => {
         // The Maps SPA may still have loaded even if DOMContentLoaded timed out.
@@ -324,7 +324,9 @@ export class LocalChromePreviewProvider implements RankProvider {
         technicalError, recordedAt: new Date().toISOString(),
         screenshot: screenshotPath,
       }, null, 2)).catch(() => {});
-      await page?.close().catch(() => {});
+      // Keep the dedicated browser's last tab alive. Closing the final tab can
+      // close a persistent Chrome context before its close event is delivered,
+      // making the next capture fail with Target.createTarget.
       this.lookupBusy = false;
     }
     return outcome;
@@ -337,7 +339,7 @@ export class LocalChromePreviewProvider implements RankProvider {
     const previous = this.cache.get(key);
     if (previous) return previous;
     if (this.blocked) return { observedAt: new Date().toISOString(), taskRef: 'local-blocked', depth: 20, complete: false, costMicros: 0, items: [], failure: 'BLOCKED' };
-    if (this.busy) throw Error('LOCAL_PREVIEW_PARALLEL_REQUEST');
+    if (this.busy || this.lookupBusy) throw Error('LOCAL_PREVIEW_PARALLEL_REQUEST');
     this.busy = true;
     const observedAt = new Date().toISOString();
     const taskRef = 'local-' + createHash('sha256').update(key).digest('hex').slice(0, 20);
@@ -347,7 +349,7 @@ export class LocalChromePreviewProvider implements RankProvider {
       const ctx = await this.browser();
       await mkdir(this.evidence, { recursive: true });
       await ctx.setGeolocation({ latitude: query.lat, longitude: query.lng, accuracy: 100 });
-      page = ctx.pages().find((tab) => tab.url() === 'about:blank') ?? await ctx.newPage();
+      page = ctx.pages().find((tab) => !tab.isClosed()) ?? await ctx.newPage();
       const uri = `https://www.google.com/maps/search/${encodeURIComponent(query.term)}/@${query.lat},${query.lng},15z?hl=pt-BR`;
       await page.goto(uri, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(1800);
@@ -463,7 +465,7 @@ export class LocalChromePreviewProvider implements RankProvider {
       }, null, 2)).catch(() => {});
       return failed;
     } finally {
-      if (page) await page.close().catch(() => {});
+      // Reuse this owned tab for the next independent navigation/capture.
       this.busy = false;
       await new Promise((resolve) => setTimeout(resolve, 2500)); // conservative pacing; no evasion
     }

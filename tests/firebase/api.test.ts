@@ -53,7 +53,19 @@ test('Firebase emulator: cadastro -> termos -> auditoria -> 7º comprovado -> re
     assert.equal((await request('POST',`/v1/reports/${reportId}/review`,{})).statusCode,200);
     assert.equal((await request('POST',`/v1/reports/${reportId}/approve`,{})).statusCode,200);
     const pdf=await request('GET',`/v1/reports/${reportId}/pdf`);assert.equal(pdf.statusCode,200,pdf.body);assert.equal(pdf.rawPayload.subarray(0,5).toString(),'%PDF-');
-    const ordinary=buildFirebaseApp({store,auth,provider});try{const noMfa=await ordinary.inject({method:'POST',url:'/v1/brands',headers:{authorization:'Bearer '+token,'x-organization-id':org},payload:{name:'Negado'}});assert.equal(noMfa.statusCode,403,noMfa.body);}finally{await ordinary.close();}
+    const ordinary=buildFirebaseApp({store,auth,provider});
+    const previousMfaPolicy=process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES;
+    try {
+      delete process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES;
+      const headers={authorization:'Bearer '+token,'x-organization-id':org};
+      const noMfa=await ordinary.inject({method:'POST',url:'/v1/brands',headers,payload:{name:'Negado'}});assert.equal(noMfa.statusCode,403,noMfa.body);
+      process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES='false';
+      const operational=await ordinary.inject({method:'POST',url:'/v1/brands',headers,payload:{name:'Operação permitida com Google'}});assert.equal(operational.statusCode,200,operational.body);
+      const team=await ordinary.inject({method:'POST',url:'/v1/team',headers,payload:{userId:'another-user',role:'analyst',locationIds:[]}});assert.equal(team.statusCode,403,team.body);assert.equal(team.json().error.code,'MFA_REQUIRED');
+    } finally {
+      if(previousMfaPolicy===undefined)delete process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES;else process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES=previousMfaPolicy;
+      await ordinary.close();
+    }
     // Browser clients cannot change immutable measurements or their roles.
     const direct=await fetch('http://'+process.env.FIRESTORE_EMULATOR_HOST+'/v1/projects/demo-seo-local/databases/(default)/documents/organizations/'+org+'/measurements/'+tasks[0].id,{method:'PATCH',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({fields:{position:{integerValue:'1'}}})});assert.equal(direct.status,403);
     console.log('Synthetic Firebase flow verified: real Auth + Firestore emulators; two fixture captures; rank 7; PDF; no paid request.');

@@ -1048,6 +1048,9 @@ test(
 );
 
 test('Universal Maps registration is atomic, reuses existing CID and never leaves an orphan', async () => {
+  // The earlier scheduler test deliberately expires this fixture tenant.
+  // This registration scenario requires an active foreign tenant of its own.
+  await admin.query("UPDATE subscriptions SET entitlement_status='ACTIVE', billing_status='PAID', paid_through=now()+interval '30 days' WHERE organization_id=$1", [ids.b]);
   const s = app();
   const cid = String(1000000000000 + Math.floor(Math.random() * 100000000));
   const input = { mapsUrl: `https://www.google.com/maps?cid=${cid}`, externalId: cid };

@@ -7,7 +7,7 @@ export type Organization = {
   paid_through?: string;
   entitlement_status?: string;
 };
-export type Me = { organizations: Organization[]; owner: boolean; mfa: boolean; email: string };
+export type Me = { organizations: Organization[]; owner: boolean; mfa: boolean; email: string; operationalMfaRequired?: boolean };
 export type Location = {
   id: string;
   name: string;

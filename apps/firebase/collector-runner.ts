@@ -98,8 +98,12 @@ async function run() {
       // Never scan or mutate tasks owned by another organization.
       await resolveRequests();
       if (Date.now() - lastRecoveryAt > 60_000) {
-        await recoverStalledTasks(store, org);
         lastRecoveryAt = Date.now();
+        try { await recoverStalledTasks(store, org); }
+        catch(error) {
+          if ((error as {code?:number}).code !== 9) throw error;
+          console.warn('[COLETOR] Recuperação aguardando conclusão dos índices; identificação e tarefas novas continuam disponíveis.');
+        }
       }
       const pending = await store.col(org, 'tasks')
         .where('state', '==', 'QUEUED').limit(5).get();
@@ -127,6 +131,7 @@ try {
   await run();
 } finally {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
+  await provider.dispose();
   try {
     await db.runTransaction(async tx => {
       const old = await tx.get(presence);

@@ -26,10 +26,10 @@ export function FirebaseMfaChallenge() {
   </section></div>;
 }
 
-export function FirebaseMfaEnrollment() {
+export function FirebaseMfaEnrollment({required=true}:{required?:boolean}={}) {
   const [secret,setSecret]=useState<TotpSecret|null>(null),[code,setCode]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[enrolled,setEnrolled]=useState(enrolledTotp);
   return <section className="notice firebase-security" aria-labelledby="security-title">
-    <h2 id="security-title">Proteja sua conta para cadastrar e medir</h2>
+    <h2 id="security-title">{required?'Proteja sua conta para cadastrar e medir':'Verificação em duas etapas'}</h2>
     {enrolled?<><p>A verificação por aplicativo está configurada. Entre novamente e confirme o código para liberar as ações administrativas.</p>
       <button onClick={()=>void firebaseIdentity.signinRedirect({max_age:0}).catch(err=>setError(message(err)))}>Entrar novamente com verificação</button></>:
       <><p>Use Google Authenticator, Microsoft Authenticator ou outro aplicativo compatível. Não há envio de SMS.</p>

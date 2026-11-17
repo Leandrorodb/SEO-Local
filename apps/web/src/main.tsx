@@ -329,7 +329,9 @@ function App() {
             <button className="primary" onClick={() => void login()}>
               {import.meta.env.VITE_LOCAL_EASY_LOGIN === 'LOCAL_MACHINE_ONLY'
                 ? 'Entrar neste computador →'
-                : 'Entrar com Google →'}
+                : import.meta.env.VITE_AUTH_MODE === 'oidc-test'
+                  ? 'Entrar com segurança →'
+                  : 'Entrar com Google →'}
             </button>
           ) : (
             <div className="notice" role="status">
@@ -636,7 +638,7 @@ function App() {
               </div>
             )}
 
-            {signed && me.data && role === 'org_admin' && !me.data.mfa && import.meta.env.VITE_AUTH_MODE !== 'oidc-test' && <FirebaseMfaEnrollment />}
+            {signed && me.data && role === 'org_admin' && !me.data.mfa && me.data.operationalMfaRequired !== false && import.meta.env.VITE_AUTH_MODE !== 'oidc-test' && <FirebaseMfaEnrollment />}
             {signed && me.error ? (
               <Empty title="Não foi possível acessar">{errorText(me.error)}</Empty>
             ) : signed && blocked && locationPath() !== '/owner' ? (
@@ -877,7 +879,7 @@ function Overview() {
                 </button>
               }
             >
-              Cadastre a ficha pelo link do Google Maps após conectar seu banco e autenticação.
+              Cadastre a ficha pelo link do Google Maps para começar.
             </Empty>
           )}
         </Panel>
@@ -912,7 +914,7 @@ function Overview() {
       <div className="two-columns">
         <Panel
           title="Prontidão de Infraestrutura"
-          subtitle="Estado real da API, banco Cloud Firestore, OIDC e provedor de coleta."
+          subtitle="Conexão da API, banco, autenticação e fonte de medição."
           action={
             <button type="button" onClick={() => navigate('/settings')}>
               Configurações

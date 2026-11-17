@@ -34,6 +34,8 @@
     "test:maps-detail": "node --experimental-strip-types --test tests/maps-detail.test.mjs",
     "build:firebase": "tsx infra/build-firebase.ts",
     "build:review": "node infra/build-review.mjs",
+    "build:hosted": "node infra/build-hosted.mjs",
+    "collector:local": "node --import tsx infra/run-firebase-collector.mjs",
     "firebase:api": "node --env-file-if-exists=.env --import tsx apps/firebase/dev.ts",
     "server:firebase": "node --env-file-if-exists=.env --import tsx apps/firebase/server.ts",
     "worker:collector": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts",

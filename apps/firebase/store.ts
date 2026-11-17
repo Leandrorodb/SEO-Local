@@ -95,7 +95,9 @@ export class Store {
     const data = organization.data()!;
     requireThat(roles.includes(member.data()!.role), 403, 'ROLE_DENIED');
     if (!legal) requireThat(data.entitlement_status === 'ACTIVE' && millis(data.paid_through) > Date.now(), 402, 'LICENSE_SUSPENDED');
-    if (member.data()!.role === 'org_admin' && roles !== readers) requireThat(p.mfa, 403, 'MFA_REQUIRED');
+    const sensitive = roles.length === 1 && roles[0] === 'org_admin';
+    const operationalMfa = process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES !== 'false';
+    if (member.data()!.role === 'org_admin' && roles !== readers && (sensitive || operationalMfa)) requireThat(p.mfa, 403, 'MFA_REQUIRED');
     return { principal: p, org, role: member.data()!.role, member: member.data()!, organization: data };
   }
   async location(c: Context, locationId: string) {

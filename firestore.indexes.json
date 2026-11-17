@@ -55,17 +55,15 @@
           "order": "ASCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "audit_logs",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
-      ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [{
+    "collectionGroup": "audit_logs",
+    "fieldPath": "created_at",
+    "indexes": [
+      {"order": "ASCENDING", "queryScope": "COLLECTION"},
+      {"order": "DESCENDING", "queryScope": "COLLECTION"},
+      {"order": "DESCENDING", "queryScope": "COLLECTION_GROUP"}
+    ]
+  }]
 }

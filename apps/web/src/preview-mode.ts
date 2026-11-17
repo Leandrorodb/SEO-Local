@@ -51,6 +51,7 @@ export function buildSetupReadinessChecklist(
   identityIssue: string | null,
 ): SetupChecklistItem[] {
   const withSubsystems = health.status === 'ok' || health.status === 'degraded';
+  const firebaseRuntime = withSubsystems && health.runtime === 'firebase';
   const db = withSubsystems ? health.database : undefined;
   const serverOidc = withSubsystems ? health.oidc : undefined;
   const worker = withSubsystems ? health.worker : undefined;
@@ -76,7 +77,7 @@ export function buildSetupReadinessChecklist(
     },
     {
       id: 'database',
-      label: 'PostgreSQL Externo (Neon) & RLS',
+      label: firebaseRuntime ? 'Cloud Firestore' : 'PostgreSQL Externo (Neon) & RLS',
       state: health.status === 'checking' ? 'checking' : dbReady ? 'ready' : 'pending',
       detail:
         health.status === 'checking'
@@ -86,10 +87,10 @@ export function buildSetupReadinessChecklist(
     },
     {
       id: 'oidc',
-      label: 'Provedor OIDC + PKCE + MFA',
+      label: firebaseRuntime ? 'Firebase Authentication' : 'Provedor OIDC + PKCE + MFA',
       state: oidcReady ? 'ready' : 'pending',
       detail: oidcReady
-        ? 'Credenciais OIDC válidas no cliente e no servidor.'
+        ? firebaseRuntime ? 'Login Google configurado. Operações administrativas exigem verificação em duas etapas.' : 'Credenciais OIDC válidas no cliente e no servidor.'
         : identityIssue === 'PLACEHOLDER_OIDC_AUTHORITY'
           ? 'Substitua os valores de exemplo de VITE_OIDC_AUTHORITY e OIDC_ISSUER pelo seu IdP.'
           : (serverOidc?.message ??

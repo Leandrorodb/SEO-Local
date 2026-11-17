@@ -105,7 +105,8 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
       const organization = await ref.get();
       if (organization.exists) organizations.push({...organization.data(),id:ref.id,role:m.data().role});
     }
-    return {organizations,owner:p.owner,mfa:p.mfa,email:p.email,uid:p.uid};
+    return {organizations,owner:p.owner,mfa:p.mfa,email:p.email,uid:p.uid,
+      operationalMfaRequired:process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES !== 'false'};
   });
   route('GET','/v1/provider/status', async r => {
     const c = await context(r);

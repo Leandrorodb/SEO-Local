@@ -1,5 +1,10 @@
 # Firebase — estado verificável
 
+**Atualização vigente:** o backend já foi publicado no Render Free, conectado
+ao Firestore; o frontend Firebase foi atualizado para sua URL externa.
+Leia [a publicação atual](ESTADO_PUBLICACAO_ATUAL.md). O restante desta página
+registra as etapas anteriores e seus bloqueios, não o estado atual do deploy.
+
 Decisão posterior do usuário: não pagar e buscar BACKEND GRATUITO NA NUVEM.
 Blaze e provedor pago descartados para esta etapa. A sugestão de priorizar
 execução no computador foi uma interpretação errada. Alternativa candidata,

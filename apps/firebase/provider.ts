@@ -98,6 +98,7 @@ export class LocalChromeCloudProvider implements CloudProvider {
   enabled: boolean;
   maxCostMicros = 0;
   private chrome = new LocalChromePreviewProvider();
+  async dispose() { await this.chrome.dispose(); }
 
   constructor(private env: Record<string, string | undefined> = process.env) {
     this.enabled = env.RANK_PROVIDER === 'local_chrome_preview' &&

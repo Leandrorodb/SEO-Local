@@ -3,6 +3,7 @@ import { PageTitle, LocationPicker, useWorkspace } from '../main';
 import { AgencyBranding, AlertSettings } from '../pages';
 import { identityConfigured, identityIssue, oidcAuthority } from '../session';
 import { buildSetupReadinessChecklist } from '../preview-mode';
+import { FirebaseMfaEnrollment } from '../firebase-security';
 
 export function SettingsView() {
   const w = useWorkspace();
@@ -19,6 +20,8 @@ export function SettingsView() {
         title="Configurações"
         description="Aparência da interface, marca nos relatórios, regras de alerta e diagnóstico real de conexão."
       />
+
+      {w.signed && w.role === 'org_admin' && import.meta.env.VITE_AUTH_MODE !== 'oidc-test' && <FirebaseMfaEnrollment required={false} />}
 
       <div className="two-columns">
         <Panel

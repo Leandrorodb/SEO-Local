@@ -1,5 +1,24 @@
 # Cole este prompt no Sonnet 4.6 do Antigravity
 
+**Atualização de publicação (17/11/2026):** leia primeiro
+`docs/ESTADO_PUBLICACAO_ATUAL.md`; as seções antigas abaixo são contexto histórico.
+A API `https://seo-local-api-vh6q.onrender.com` já está LIVE no Render Free e seu
+`/health` confirmou conexão ao Firestore. Frontend Firebase publicado apontando
+para essa API. Identity Platform ativado mantendo Spark; TOTP por aplicativo
+habilitado (sem SMS). O usuário escolheu explicitamente login Google sem exigir
+código adicional para cadastro e medição neste piloto; a flag privada
+`REQUIRE_MFA_FOR_OPERATIONAL_WRITES=false` libera somente operações comuns,
+mantendo equipe/licença/aprovação administrativa protegidas. Login e organização
+já foram confirmados no site. Dois pilotos reais identificaram a ficha, mas retornaram inconclusivo
+por divergência entre capturas; não tratar como posição comprovada nem teste
+completo pelo site. Credenciais privadas dedicadas estão fora do Git, em `work/`
+do workspace original. Não copie nem exponha seus conteúdos. O código mais
+recente está em `main` e `desenvolvimento-gemini`; o serviço Render existente
+acompanha `desenvolvimento-gemini`. Use `npm run build:hosted` e
+`firebase deploy --only hosting --config firebase.spark.json` para reproduzir o
+frontend. `npm run collector:local` usa configuração privada local; novas
+medições dependem desse processo e do computador ligado.
+
 **Correção mais recente do usuário (17/11/2026): quer BACKEND GRATUITO NA NUVEM.**
 Não pagar, não ativar Blaze nem vincular faturamento. A sugestão anterior de
 priorizar execução no computador foi uma interpretação errada do pedido.
