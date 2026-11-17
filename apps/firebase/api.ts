@@ -122,12 +122,37 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     const c=await context(r),rows=await store.list(c.org,'locations');
     return sorted(rows.filter(l=>c.role!=='client_viewer'||c.member.location_ids.includes(l.id)));
   });
+  // Local Chrome runs on the authorized user's PC, never inside the cloud API.
+  // Resolution is queued in Firestore and polled from the authenticated browser.
   route('POST','/v1/locations/resolve',async r=>{
-    await context(r,writers);
-    const b=z.object({mapsUrl:z.string().max(2000)}).strict().parse(r.body);
+    const c=await context(r,writers);
+    const b=z.object({mapsUrl:z.string().trim().min(1).max(2000)}).strict().parse(r.body);
     const parsed=parseMapsUrl(b.mapsUrl);
-    if (!provider.enabled) return {status:'PROVIDER_UNAVAILABLE',candidates:[],missing:['fonte de dados para identificação automática']};
-    return {status:'REVIEW_REQUIRED',candidates:await provider.resolve(parsed.url)};
+    const active=await auditProvider(c.org);
+    if (!active.enabled) return {status:'PROVIDER_UNAVAILABLE',candidates:[],missing:['coletor ativo e autorizado']};
+    if (active.id !== 'local_chrome_preview') {
+      return {status:'REVIEW_REQUIRED',candidates:await active.resolve(parsed.url)};
+    }
+    const requestId=digest({org:c.org,actor:c.principal.uid,url:parsed.url,minute:Math.floor(Date.now()/60000)}).slice(0,40);
+    const ref=store.ref(c.org,'resolve_requests',requestId);
+    try {
+      await ref.create({id:requestId,maps_url:parsed.url,requested_by:c.principal.uid,
+        state:'QUEUED',provider:'local_chrome_preview',created_at:now()});
+    } catch (err) {
+      // Idempotent retry only for the exact same actor and normalized URL.
+      const previous=await ref.get();
+      if(!previous.exists || previous.data()?.requested_by!==c.principal.uid ||
+        previous.data()?.maps_url!==parsed.url) throw err;
+    }
+    return {status:'QUEUED',requestId,candidates:[]};
+  });
+  route('GET','/v1/locations/resolve/:requestId',async r=>{
+    const c=await context(r,writers);
+    const request=await store.get(c.org,'resolve_requests',r.params.requestId);
+    requireThat(request.requested_by===c.principal.uid,403,'RESOLVE_REQUEST_DENIED');
+    if(request.state==='DONE') return {status:request.status??'REVIEW_REQUIRED',candidates:request.candidates??[],missing:request.missing??[]};
+    if(request.state==='FAILED') return {status:'MAPS_LOOKUP_FAILED',candidates:[],missing:[request.failure??'identificação não concluída']};
+    return {status:'QUEUED',candidates:[],requestId:r.params.requestId};
   });
   async function register(c:Context, b:z.infer<typeof locationInput>, hit?:z.infer<typeof candidateSchema>) {
     const parsed=parseMapsUrl(b.mapsUrl), newId=id();
