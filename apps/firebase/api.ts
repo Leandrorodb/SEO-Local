@@ -108,7 +108,7 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     const local = active.id === 'local_chrome_preview';
     return {enabled:active.enabled,provider:active.enabled?active.id:'disabled',
       mode:local?'LOCAL_EXPERIMENTAL':'COMMERCIAL',
-      canResolve:active.enabled && !local,canMeasureMaps:active.enabled,
+      canResolve:active.enabled,canMeasureMaps:active.enabled,
       noPaidApi:local,reason:active.enabled?null:'PROVIDER_NOT_CONFIGURED'};
   });
   route('GET','/v1/brands',async r => {const c=await context(r);return sorted(await store.list(c.org,'brands'));});
@@ -150,10 +150,23 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     const c=await context(r,writers);
     const request=await store.get(c.org,'resolve_requests',r.params.requestId);
     requireThat(request.requested_by===c.principal.uid,403,'RESOLVE_REQUEST_DENIED');
-    if(request.state==='DONE') return {status:request.status??'REVIEW_REQUIRED',candidates:request.candidates??[],missing:request.missing??[]};
+    if(request.state==='DONE') return {status:request.status??'REVIEW_REQUIRED',requestId:r.params.requestId,candidates:request.candidates??[],missing:request.missing??[]};
     if(request.state==='FAILED') return {status:'MAPS_LOOKUP_FAILED',candidates:[],missing:[request.failure??'identificação não concluída']};
     return {status:'QUEUED',candidates:[],requestId:r.params.requestId};
   });
+  async function confirmedHits(c:Context, mapsUrl:string, resolveRequestId?:string) {
+    if (process.env.RANK_QUEUE_MODE !== 'local_collector') {
+      return provider.resolve(mapsUrl);
+    }
+    requireThat(!!resolveRequestId,409,'MAPS_LOOKUP_REQUIRED');
+    const request=await store.get(c.org,'resolve_requests',resolveRequestId);
+    const completed=request.finished_at?.toMillis?.();
+    requireThat(request.state==='DONE' && request.provider==='local_chrome_preview' &&
+      request.requested_by===c.principal.uid && request.maps_url===mapsUrl &&
+      typeof completed==='number' && completed<=Date.now() &&
+      Date.now()-completed<=10*60_000,409,'MAPS_LOOKUP_EXPIRED_OR_INVALID');
+    return candidateSchema.array().max(20).parse(request.candidates);
+  }
   async function register(c:Context, b:z.infer<typeof locationInput>, hit?:z.infer<typeof candidateSchema>) {
     const parsed=parseMapsUrl(b.mapsUrl), newId=id();
     const identityKey=digest({cid:hit?.cid??parsed.cid,place:hit?.placeId??parsed.placeId,url:!(hit?.cid??parsed.cid)?parsed.url:null});
@@ -183,16 +196,18 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     reply.code(result.created?201:200);return result;
   });
   route('POST','/v1/locations/register-confirmed',async(r,reply)=>{
-    const c=await context(r,writers), b=z.object({mapsUrl:z.string().max(2000),externalId:text}).strict().parse(r.body);
-    const parsed=parseMapsUrl(b.mapsUrl), hits=(await provider.resolve(parsed.url)).filter(x=>x.cid===b.externalId||x.placeId===b.externalId);
+    const c=await context(r,writers), b=z.object({mapsUrl:z.string().max(2000),externalId:text,
+      resolveRequestId:z.string().min(1).max(128).optional()}).strict().parse(r.body);
+    const parsed=parseMapsUrl(b.mapsUrl), hits=(await confirmedHits(c,parsed.url,b.resolveRequestId)).filter(x=>x.cid===b.externalId||x.placeId===b.externalId);
     requireThat(hits.length===1,409,'AMBIGUOUS_IDENTITY');const hit=hits[0];
     requireThat((!parsed.cid||parsed.cid===hit.cid)&&(!parsed.placeId||parsed.placeId===hit.placeId),409,'MAPS_IDENTITY_MISMATCH');
     const result=await register(c,{name:hit.name,address:hit.address,city:hit.city,mapsUrl:parsed.url,lat:hit.lat,lng:hit.lng},hit);
     reply.code(result.created?201:200);return result;
   });
   route('POST','/v1/locations/:id/confirm',async r=>{
-    const c=await context(r,writers),l=await store.location(c,r.params.id),b=z.object({externalId:text}).strict().parse(r.body);
-    const parsed=parseMapsUrl(l.maps_url),hits=(await provider.resolve(parsed.url)).filter(x=>x.cid===b.externalId||x.placeId===b.externalId);
+    const c=await context(r,writers),l=await store.location(c,r.params.id),
+      b=z.object({externalId:text,resolveRequestId:z.string().min(1).max(128).optional()}).strict().parse(r.body);
+    const parsed=parseMapsUrl(l.maps_url),hits=(await confirmedHits(c,parsed.url,b.resolveRequestId)).filter(x=>x.cid===b.externalId||x.placeId===b.externalId);
     requireThat(hits.length===1,409,'AMBIGUOUS_IDENTITY');const hit=hits[0];
     requireThat((!parsed.cid||parsed.cid===hit.cid)&&(!parsed.placeId||parsed.placeId===hit.placeId),409,'MAPS_IDENTITY_MISMATCH');
     const update={name:hit.name,address:hit.address,city:hit.city,lat:hit.lat,lng:hit.lng,cid:hit.cid,place_id:hit.placeId,
