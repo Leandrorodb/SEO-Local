@@ -1,0 +1,2171 @@
+NEXUS LOCAL RANK TRACKER - TRANSFERENCIA TEXTUAL DO CODIGO ORIGINAL
+ATENCAO: Alternativa ao GitHub. Cada bloco e o conteudo integral de um arquivo.
+Peça ao AI Studio: "Crie ou atualize os arquivos conforme os blocos abaixo sem omitir conteudo; depois use o prompt de migracao fornecido."
+
+
+==================================================
+### INICIO DO ARQUIVO: package.json
+==================================================
+{
+  "name": "nexus-local-rank-tracker",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Painel local de auditoria de ranking SEO com trilha de evidências",
+  "type": "module",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/server.js && node --check src/services/measurement.js && node --check public/app.js"
+  },
+  "dependencies": {
+    "playwright": "^1.56.0"
+  }
+}
+
+### FIM DO ARQUIVO: package.json
+
+==================================================
+### INICIO DO ARQUIVO: README.md
+==================================================
+# NEXUS LOCAL RANK TRACKER — v1.1
+
+Painel local para gerenciar fichas de empresas, termos por cluster, medições do Google Maps, resultados com trilha de evidência e feedbacks para WhatsApp. Sem uso de LLM e sem créditos de IA.
+
+## Iniciar no Windows
+
+1. Instale Node.js 22.16+ (recomendado Node 22 LTS ou superior) e Google Chrome.
+2. Extraia todo o arquivo ZIP para uma pasta normal do seu computador.
+3. Clique em `INICIAR_NEXUS.bat`. Na primeira execução, o sistema instala Playwright via npm (precisa internet apenas nessa etapa).
+4. Acesse `http://127.0.0.1:4177`. Se não abrir automaticamente, cole esse endereço no Chrome.
+5. É possível importar empresas em lote (colunas `nome;cidade;latitude;longitude;CID`) e depois importar termos ou gerar clusters por nicho.
+6. As três fichas **Jares Pouso Alegre, Jares Três Corações e Jares Outlet**, com 84 termos, vêm cadastradas como exemplo operacional.
+7. **Revise as coordenadas e o CID** de cada ficha antes de medir. Coordenadas de referência são aproximadas e não representam necessariamente a porta da loja.
+8. Na aba Medições, escolha a empresa. Use `✦ Gerar clusters` para criar termos sugeridos sem IA, ou importe termos próprios. Em seguida clique em `Medir pesquisas`. Use P1 para uma coleta curta ou Todos para os demais termos.
+9. Uma janela do Chrome é aberta para o Google Maps. Não feche enquanto estiver medindo.
+10. Revise os resultados `Revisar` e abra as capturas de tela; confirme apenas quando identidade e posição orgânica forem claras. Depois gere o feedback e copie para WhatsApp.
+
+No Linux/macOS: `npm install` seguido de `npm start`. O Chrome precisa estar instalado no computador ou você deve adaptar `channel:'chrome'` no serviço de coleta.
+
+## Pastas e arquitetura
+
+- `src/db.js`: banco SQLite local, migração inicial e dados.
+- `src/server.js`: API HTTP protegida em `127.0.0.1`.
+- `src/services/measurement.js`: fila sequencial, navegador Playwright, geolocalização e evidências.
+- `src/services/report.js`: geração de feedback e CSV seguro.
+- `public/`: interface web responsiva sem dependências frontend.
+- `data/jares-seed.json`: matriz inicial das 3 unidades (84 pesquisas).
+- `local-data/nexus.sqlite`: banco criado automaticamente **fora do código-fonte**.
+- `local-data/evidence`: prints e perfil temporário do Chrome.
+
+**Backup:** copie a pasta `local-data` com o programa fechado. Para manter histórico, não apague essa pasta quando atualizar o sistema.
+
+## Regras de medição
+
+- A consulta é feita a partir de coordenadas de referência por unidade; não existe garantia de mesma posição para toda uma cidade.
+- Se o URL de um resultado contém o CID da ficha, é classificado como `Confirmado` (observe que a interface do Google pode alterar os links).
+- Correspondências apenas por nome entram como `Revisar`. **Não** aparecem como conquista em relatórios antes de validação humana.
+- Uma abertura direta da ficha sem feed ordenado não é interpretada como Top 1.
+- Resultados sinalizados como patrocinados não são contabilizados intencionalmente. Mudanças na marcação da interface podem exigir revisão dos prints.
+- Se o Google mostrar verificação humana/CAPTCHA, a execução é interrompida. **Não** usa evasão de bloqueios, proxies, rotação de identidades ou quebra de CAPTCHA.
+- A coleta é de baixa frequência, sequencial, acionada pelo usuário. Consulte as condições do serviço antes de usar automação em larga escala; para escala comercial, considere uma fonte licenciada de dados de ranking.
+- O sistema **não** altera o Perfil da Empresa no Google e **não** envia WhatsApp automaticamente.
+
+## Problemas comuns
+
+**O botão de medir não abre o Chrome:** confira se Google Chrome está instalado, se a tela está desbloqueada e se o terminal mostra algum erro. Use `npm install` para instalar Playwright.
+
+**Aparece `REVIEW` (revisar):** a URL do resultado não provou automaticamente o identificador da ficha. Abra o print e confira antes de confirmar. O rank só será reportado após essa etapa.
+
+**Aparece `NO_LIST`:** o Google Maps não exibiu uma lista comparável ou houve redirecionamento direto. Isso não é evidência de posição 1.
+
+**Aparece `BLOCKED`:** o Google solicitou verificação humana. Interrompa a automação e consulte o serviço; não tente burlar a verificação.
+
+**Não aparece nenhuma posição mesmo com loja presente no Google:** pode haver diferença no nome, no CID, endereço, scroll, sessão do Maps ou localização da busca. Verifique o print antes de confiar em resultados.
+
+## Verificação técnica
+
+`npm test` executa testes de segurança de posição, confirmação por CID, caso sem feed e banco local.
+
+O sistema é um **MVP operacional**, não um SaaS multiusuário pronto para comercialização. Não possui autenticação remota, RBAC, multi-tenant e telemetria de produção. Fica restrito ao `localhost`, com banco local e sem expor dados a terceiros. Para vender como SaaS, separar API, autenticação, isolamento por `orgId`, jobs persistentes, storage privado, auditoria de acessos, limites por tenant e contratação de fonte licenciada de ranking.
+
+## Novidade da v1.1: importar o resultado.zip sem gastar tokens
+
+O primeiro piloto foi executado pelo medidor independente, que exportou `resultado.zip` contendo `MEDICOES_JARES.csv`, imagens e listas de resultados.
+
+1. **Antes de atualizar:** feche a janela de terminal do Nexus e faça backup da pasta `local-data` da versão antiga.
+2. Extraia a **v1.1** na pasta onde você deseja manter o sistema. Se preferir instalar em outra pasta, copie sua pasta antiga `local-data` para dentro da nova instalação antes de iniciar o programa.
+3. Coloque o `resultado.zip` (gerado pelo medidor) ao lado de `IMPORTAR_RESULTADO.bat`, **ou arraste esse ZIP diretamente para cima do arquivo `.bat`**.
+4. Execute `IMPORTAR_RESULTADO.bat`. Uma mesma planilha não será importada duas vezes. O ZIP pode ser grande porque contém prints; o programa preserva as imagens dentro de `local-data/evidence`.
+5. Execute `INICIAR_NEXUS.bat` e veja os resultados em **Medições → empresa → histórico de auditorias**. As coletas importadas aparecem identificadas como **Importado**. Em **Feedbacks**, copie os termos com evidência verificada.
+
+**Comando alternativo (terminal):** `node scripts/import-result.js "C:\\caminho\\resultado.zip"`. Também aceita a pasta extraída que contém `MEDICOES_JARES.csv` e `prints`.
+
+**Resultados do piloto de referência:** 84 pesquisas, das quais 60 tiveram posição concordante com o CID nos arquivos de resultados; as demais 24 não foram automaticamente anunciadas como colocação confirmada (10 para revisão e 14 sem posição comparável/localização conclusiva). Isso confirma a integridade da importação dos arquivos fornecidos, **não** é garantia de precisão geográfica em toda a cidade nem de validade de uma captura patrocinada ou desatualizada. Confira os prints antes do envio.
+
+**Se você atualizar sobre uma versão antiga**, mantenha `local-data`: é ali que ficam os dados reais. Não copie a pasta `local-data` de uma instalação nova por cima da antiga. O SQLite recebe uma migração compatível na primeira inicialização da v1.1. Não execute importação simultaneamente a outra coleta.
+
+**Limitação desta versão:** a importação em lote suporta o formato do medidor Jares (`MEDICOES_JARES.csv`). Para outros scripts, será necessário adaptar um importador ou seguir uma interface CSV padronizada em uma versão futura.
+
+
+## v1.2 — mais duas unidades Jares (Lavras e Varginha)
+
+- Cadastro incremental de Lavras e Varginha (38 termos cada), preservando as três Jares anteriores, medições, histórico e prints.
+- As 76 consultas foram importadas da MATRIZ AMPLIADA de 21/10/2026, com 5 clusters por unidade e prioridades Alta/Média/Baixa.
+- Execute INICIAR_NEXUS.bat normalmente: as duas empresas aparecem automaticamente no painel, mesmo se voce ja tinha banco v1.1.
+- A ferramenta externa MEDIDOR_JARES_LAVRAS_VARGINHA pode executar as 76 buscas de forma independente. Seus resultados sao importáveis no v1.2 usando IMPORTAR_RESULTADO.bat.
+- O motor faz medições locais; os 2 primeiros lugares históricos de Lavras e os rankings anteriores de Varginha nao foram importados como medições atuais.
+- **Antes de atualizar:** feche o sistema e preserve sua pasta local-data. O ZIP de instalacao nao contem banco nem prints pessoais.
+
+### FIM DO ARQUIVO: README.md
+
+==================================================
+### INICIO DO ARQUIVO: ARQUITETURA.md
+==================================================
+# Arquitetura — Nexus Local Rank Tracker
+
+## Objetivo e limites
+
+Aplicação local, mono-operador e de baixo custo para uma carteira de SEO local. Diferencia **sugestão de palavras-chave**, **coleta de resultados** e **verificação de posições**. Não garante geogrid nem substitui uma fonte licenciada de SERP para uso em escala comercial.
+
+## Fluxo de dados
+
+```
+Cadastro de empresa + CID + coordenadas
+        |
+Clusters/termos P1-P3 (digitados, importados ou sugeridos sem IA)
+        |
+Fila persistida SQLite (1 navegação por vez)
+        |
+Chrome Playwright em janela visível / centro geográfico escolhido
+        |
+Resultado orgânico ordenado + nome + URL + detalhe + screenshot
+        |
+Identificação por CID => VERIFICADO
+Identificação somente por nome => REVISÃO HUMANA
+Sem lista ou bloqueio => SEM MEDIÇÃO COMPROVADA
+        |
+Histórico por run/termo e CSV
+        |
+Feedback WhatsApp com APENAS posições verificadas
+```
+
+## Separação de responsabilidades
+
+- UI: `public/index.html`, `public/app.js`, `public/styles.css`.
+- API e regras de acesso local: `src/server.js`.
+- Persistência e esquema: `src/db.js` (`node:sqlite`).
+- Ingestão de resultados e fila: `src/services/measurement.js`.
+- Gerador determinístico de clusters: `src/services/keywords.js`.
+- Feedbacks/exportação: `src/services/report.js`.
+- Validação automatizada: `tests/measurement.test.js`.
+
+## Critérios de qualidade
+
+- Não confiar em nomes repetidos para classificar automaticamente.
+- Ignorar, tanto quanto possível, inserções de anúncios; inspecionar evidências quando layout mudar.
+- Posicionamento geográfico deve ter ponto e timestamp claros.
+- Um acesso direto à ficha não é evidência de posição 1.
+- Capturas e listas observadas ficam no armazenamento local.
+- API escuta apenas em `127.0.0.1`; não expor porta na internet.
+- Nenhuma mensagem de WhatsApp é enviada sem o usuário copiar.
+
+## Evolução para SaaS multi-tenant
+
+Quando o motor local estiver validado em uso real:
+
+1. Isolar API REST e interface React/TypeScript; validar o contrato com Zod.
+2. Migrar SQLite para PostgreSQL e incluir `org_id` em tabelas com políticas RLS.
+3. Adicionar autenticação Firebase/Google e RBAC (admin, consultor, cliente).
+4. Salvar jobs com idempotência em Redis/BullMQ e workers separados.
+5. Usar storage privado de evidências por organização, com URLs temporárias.
+6. Controlar custos por tenant, limites de consultas, consentimento e retenção LGPD.
+7. Para verificação regular em grande escala, contratar fonte licenciada de dados de posição geográfica e garantir conformidade com termos da plataforma.
+8. Adicionar testes E2E, métricas, alertas, monitoramento e deploy com backups/versionamento.
+
+Não subir esta versão local diretamente em hosting público: ela **não possui autenticação nem isolamento multi-tenant**.
+
+## v1.1 — Ingestão auditável de medições existentes
+
+- `scripts/import-result.js`: importação local por CLI ou `.bat`, sem expor upload de arquivos por rede.
+- `src/services/import.js`: parser CSV, leitura de ZIP local, normalização de empresas, correspondência exata de pesquisas e clusters, verificação independente de CID no JSON da lista, cópia de evidências e transação SQLite.
+- `runs.source`: indica `LIVE` para coletas no painel e `IMPORT` para dados de medidores externos. Migração adiciona a coluna em bases v1 existentes sem apagar histórico.
+- `imported_batches`: hash SHA-256 do CSV para impedir duplicação na mesma base.
+- Políticas: posição importada só vira `VERIFIED` quando o CID encontrado no JSON corresponde à empresa e à posição da linha do CSV, descontando anúncios sinalizados. Nos demais casos a posição candidata vai para `REVIEW` e não aparece como conquista confirmada.
+- Limitação: o processo de importação específico de `MEDICOES_JARES.csv` exige empresas previamente cadastradas com mesmo nome e termos/cluster previamente incluídos. A fila de coleta original continua separada.
+
+### FIM DO ARQUIVO: ARQUITETURA.md
+
+==================================================
+### INICIO DO ARQUIVO: public/index.html
+==================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+ <meta name="theme-color" content="#0d181d"/>
+ <meta name="description" content="Nexus Local Rank Tracker — auditoria local com evidências."/>
+ <title>NEXUS | Local Rank Tracker</title>
+ <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+ <div class="shell">
+  <aside class="sidebar" id="sidebar">
+   <div class="brand"><div class="brandmark"><svg width="31" height="31" viewBox="0 0 36 36" fill="none"><path d="M5 29 18 5l13 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="m11 23 7-6 7 6" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></div><div><strong>NEXUS<span class="brand-dot">.</span></strong><small>LOCAL INTELLIGENCE</small></div></div>
+   <div class="sidebar-kicker">WORKSPACE</div>
+   <nav class="nav" aria-label="Navegação principal">
+    <button class="nav-item active" data-view="overview"><span class="nav-icon">▦</span> Visão geral</button>
+    <button class="nav-item" data-view="companies"><span class="nav-icon">▤</span> Empresas <span class="nav-count" id="nav-count">3</span></button>
+    <button class="nav-item" data-view="measurements"><span class="nav-icon">◎</span> Medições</button>
+    <button class="nav-item" data-view="reports"><span class="nav-icon">≡</span> Feedbacks</button>
+   </nav>
+   <div class="sidebar-spacer"></div>
+   <div class="sidebar-kicker">AMBIENTE LOCAL</div>
+   <div class="environment"><span class="pulse-dot"></span><div><strong>Operação independente</strong><small>Dados e prints no seu PC</small></div></div>
+   <div class="sidebar-footer"><span>Atlas / Operação Google</span><small>v1.1 · Sem tokens de IA</small></div>
+  </aside>
+  <div class="main-shell">
+   <header class="topbar">
+    <button class="mobile-menu icon-button" id="menu-button" aria-label="Abrir menu">☰</button>
+    <div class="breadcrumb">Operações <span>/</span> <strong id="crumb">Visão geral</strong></div>
+    <div class="top-actions"><span class="date-label" id="clock"></span><span class="top-pill"><i></i> Localhost seguro</span><div class="avatar">LR</div></div>
+   </header>
+   <main id="content" tabindex="-1"><div class="loading-view">Carregando seu painel Nexus…</div></main>
+  </div>
+ </div>
+ <div id="toast" role="status" aria-live="polite"></div>
+ <div class="modal-backdrop hidden" id="modal-backdrop"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><div class="eyebrow">NEXUS WORKSPACE</div><h2 id="modal-title"></h2></div><button id="modal-close" class="icon-button" aria-label="Fechar">×</button></div><div id="modal-body"></div></div></div>
+ <script src="/app.js" defer></script>
+</body>
+</html>
+
+### FIM DO ARQUIVO: public/index.html
+
+==================================================
+### INICIO DO ARQUIVO: public/styles.css
+==================================================
+:root{--ink:#172b32;--muted:#75858a;--line:#e6ebeb;--main:#f5f7f7;--white:#fff;--navy:#0f1e25;--accent:#11aa8e;--accent-dark:#087e6c;--warm:#eff8f4;--shadow:0 13px 39px rgba(17,36,43,.055);font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;font-synthesis:none}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;color:var(--ink);background:var(--main)}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.52;cursor:not-allowed}a{color:inherit;text-decoration:none}.shell{display:flex;min-height:100vh}.sidebar{background:var(--navy);width:258px;flex:0 0 258px;display:flex;flex-direction:column;color:#deecee;padding:30px 19px 20px;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:12px;padding:1px 10px 40px}.brandmark{height:43px;width:43px;border-radius:12px;background:#1b373b;display:grid;place-items:center;color:#5be2c6}.brand strong{font-size:22px;letter-spacing:1.1px;line-height:1.2}.brand-dot{color:#49dbb7}.brand small{display:block;letter-spacing:2.1px;color:#7f9ca3;font-size:9px;margin-top:5px}.sidebar-kicker{color:#668189;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:0 17px;margin-bottom:16px}.nav{display:flex;flex-direction:column;gap:5px}.nav-item{border:0;background:transparent;text-align:left;color:#92abb0;padding:13px 16px;display:flex;align-items:center;gap:13px;border-radius:10px;font-size:13px;font-weight:650}.nav-item:hover{color:#fff;background:#183039}.nav-item.active{color:#e6fff7;background:#23413e;box-shadow:inset 3px 0 #42d9b5}.nav-icon{font-size:21px;width:22px;font-weight:400;line-height:1}.nav-count{margin-left:auto;background:#2c484d;padding:2px 7px;border-radius:6px;font-size:11px;color:#b9d2d6}.sidebar-spacer{flex:1}.environment{display:flex;gap:10px;align-items:center;margin:0 8px 21px;padding:13px 10px;background:#162c34;border:1px solid #26434a;border-radius:13px}.environment strong{font-size:11px}.environment small{display:block;color:#87a3a9;font-size:10px;margin-top:5px}.pulse-dot,.top-pill i{display:inline-block;background:#4be0ae;border-radius:99px;height:8px;width:8px;box-shadow:0 0 0 4px rgba(75,224,174,.13)}.sidebar-footer{border-top:1px solid #284048;padding:19px 11px 5px;display:flex;flex-direction:column;gap:5px}.sidebar-footer span{font-size:11px}.sidebar-footer small{color:#6e8a91;font-size:10px}.main-shell{flex:1;min-width:0}.topbar{height:82px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 41px}.breadcrumb{color:#87979a;font-size:12px}.breadcrumb span{margin:0 12px;color:#d2dbdc}.breadcrumb strong{color:#263a40}.top-actions{display:flex;align-items:center;gap:25px}.date-label{font-size:12px;color:#6c7d83}.top-pill{display:flex;align-items:center;gap:9px;border:1px solid #d9eae3;border-radius:99px;color:#468674;background:#f6fbf8;padding:9px 12px;font-size:11px;font-weight:700}.top-pill i{width:6px;height:6px;box-shadow:none}.avatar{width:36px;height:36px;display:grid;place-items:center;background:#dbe8e5;border-radius:50%;font-weight:800;font-size:12px;color:#35534d}.mobile-menu{display:none}main{padding:35px 42px 50px;max-width:1650px;margin:auto}.eyebrow{font-size:10px;font-weight:850;letter-spacing:1.75px;color:#209b82;text-transform:uppercase}.page-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:27px}.page-header h1{font-size:31px;letter-spacing:-1.05px;margin:7px 0 9px;font-weight:780}.page-header p{font-size:13px;color:var(--muted);margin:0;line-height:1.6}.page-actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid transparent;border-radius:9px;padding:11px 16px;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:9px;justify-content:center;min-height:41px;transition:background .15s,transform .15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:#0a987e;color:#fff;box-shadow:0 8px 19px rgba(10,152,126,.16)}.btn-primary:hover{background:#087d69}.btn-secondary{border-color:#dce5e4;background:#fff;color:#30464b}.btn-secondary:hover{background:#f5faf8}.btn-muted{background:#edf7f3;color:#168670}.btn-danger{background:#fff1ef;border-color:#ffded9;color:#aa463b}.btn-sm{padding:8px 11px;min-height:32px;font-size:11px}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.panel-pad{padding:24px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px;margin-bottom:22px}.stat{padding:22px 23px;position:relative;overflow:hidden;min-height:150px}.stat-icon{display:grid;place-items:center;height:32px;width:32px;background:#eff8f5;border-radius:9px;color:#0c9478;font-size:20px}.stat-label{font-size:12px;color:#6f8388;margin-top:17px}.stat-number{font-weight:800;font-size:30px;letter-spacing:-.8px;margin-top:5px}.stat-note{font-size:10px;color:#9ca8aa;margin-top:8px}.stat:after{content:'';position:absolute;width:80px;height:80px;border-radius:50%;background:#ecf7f2;right:-40px;top:-40px}.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(315px,1fr);gap:20px}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.panel-header h2{margin:0;font-size:16px;letter-spacing:-.35px}.panel-header small{font-size:11px;color:var(--muted)}.subtle-label{font-size:11px;letter-spacing:.9px;font-weight:850;color:#9ca8a9;text-transform:uppercase}.company-list{display:flex;flex-direction:column;gap:10px}.company-row{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid #ebefef;border-radius:11px;background:#fff}.company-row:hover{border-color:#bde2d7;background:#fcfefd}.company-monogram{flex:0 0 41px;width:41px;height:41px;display:grid;place-items:center;border-radius:10px;background:#e7f3f0;color:#168d76;font-weight:850;font-size:13px}.company-detail{min-width:0;flex:1}.company-detail strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-detail span{display:block;font-size:11px;color:#87999a;margin-top:5px}.pill{font-size:10px;padding:6px 9px;border-radius:99px;background:#f0f2f3;color:#7d8b8f;font-weight:800;white-space:nowrap}.pill.good{color:#14846d;background:#eaf8f2}.pill.warning{color:#a77826;background:#fff5e2}.pill.running{color:#306eaf;background:#eaf3ff}.pill.error{color:#b34b44;background:#fff0ec}.chevron{color:#aab5b7;font-size:19px}.activity{display:flex;flex-direction:column;gap:21px}.activity-row{display:flex;gap:12px}.activity-mark{width:31px;height:31px;flex:0 0 31px;border-radius:9px;display:grid;place-items:center;background:#f0f7f6;color:#1e9d80}.activity-text strong{display:block;font-size:12px;line-height:1.5}.activity-text p{font-size:11px;color:#809094;margin:5px 0 0}.empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;padding:38px 20px;text-align:center;border:1px dashed #dbe5e3;border-radius:12px;background:#fbfdfc;color:#849496;font-size:12px}.empty strong{color:#334c52;font-size:14px}.empty-icon{font-size:26px;color:#8abab0}.info-panel{margin-top:20px;padding:22px;display:flex;gap:14px;background:#f0f9f4;border-color:#d4ebe1}.info-symbol{font-size:24px}.info-panel h3{margin:0 0 7px;font-size:13px}.info-panel p{margin:0;font-size:11px;line-height:1.8;color:#628075}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.search{min-width:260px;max-width:420px;width:100%;padding:12px 14px;border:1px solid #dbe5e4;border-radius:9px;background:#fff;color:#263c42;outline:none;font-size:12px}.search:focus,.field:focus,textarea:focus{border-color:#0eaa88;box-shadow:0 0 0 3px rgba(14,170,136,.1)}.data-table{width:100%;border-collapse:collapse;table-layout:auto;font-size:12px}.data-table th{text-transform:uppercase;font-size:10px;letter-spacing:.8px;color:#95a3a7;font-weight:850;text-align:left;background:#fafcfc;padding:15px 17px;white-space:nowrap}.data-table td{padding:15px 17px;border-top:1px solid #edf0f0;color:#4c656b;vertical-align:middle}.data-table td strong{color:#263c41}.data-table tbody tr:hover{background:#fafdfc}.table-scroll{overflow:auto;border:1px solid #e9eeee;border-radius:10px}.action-link{border:0;background:none;color:#168973;font-size:12px;font-weight:800;padding:4px 0}.detail-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:16px}.kv span{display:block;font-size:10px;color:#91a0a4}.kv strong{font-size:13px;display:block;margin-top:7px;word-break:break-word}.metric-mini{display:flex;flex-wrap:wrap;gap:8px}.metric-mini .mini{padding:13px 17px;background:#f7faf9;border:1px solid #e9efed;border-radius:11px;flex:1;min-width:100px}.mini strong{display:block;font-size:22px}.mini span{font-size:10px;color:#7c9292}.run-progress{width:100%;height:8px;border-radius:40px;background:#e8f0ee;overflow:hidden;margin:15px 0 8px}.run-progress div{height:100%;background:#11a98a;transition:width .3s}.run-status{font-size:11px;color:#71878d}.report-box{font-size:12px;line-height:1.7;white-space:pre-wrap;color:#344a4f;background:#f7faf9;padding:22px;border:1px solid #e4eae9;border-radius:11px;max-height:540px;overflow:auto}.field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.field-group{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}.field-group label{font-size:11px;font-weight:780;color:#556d72}.field,.field-group textarea{width:100%;border:1px solid #dce5e3;border-radius:9px;padding:12px 12px;background:#fff;color:#223d42;outline:none;font-size:12px}.field-group textarea{resize:vertical;min-height:140px;line-height:1.6}.modal-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(11,24,29,.57);display:flex;align-items:center;justify-content:center;padding:20px}.hidden{display:none!important}.modal{background:#fff;width:min(100%,660px);max-height:min(90vh,900px);overflow:auto;border-radius:17px;padding:27px;box-shadow:0 25px 90px rgba(1,16,20,.32)}.modal-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:24px}.modal-head h2{margin:7px 0 0;letter-spacing:-.5px}.icon-button{border:0;background:#f1f5f5;color:#62777c;font-size:23px;width:34px;height:34px;display:grid;place-items:center;border-radius:9px}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.fine-print{color:#8a999c;font-size:11px;line-height:1.6}.detail-title{margin:0 0 18px;font-size:20px}.flexline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.tag{color:#62817d;font-size:10px;font-weight:800;background:#f1f8f5;border:1px solid #e0ede7;padding:5px 8px;border-radius:7px}#toast{position:fixed;z-index:2000;right:25px;bottom:25px;max-width:430px;color:#fff;background:#19373b;border-radius:10px;box-shadow:0 15px 40px rgba(10,20,24,.2);font-size:12px;padding:0;overflow:hidden}#toast.show{padding:15px 19px}.loading-view{padding:100px;color:#78908e;text-align:center}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mb-20{margin-bottom:20px}.sep{border:0;border-top:1px solid #e5ebea;margin:20px 0}.notice{padding:14px 16px;background:#fff9e9;border:1px solid #f0e6c8;color:#7b6739;border-radius:10px;font-size:11px;line-height:1.7}.result-status{font-size:11px;color:#879596}.table-actions{display:flex;gap:7px;align-items:center;white-space:nowrap}details>summary{cursor:pointer;font-weight:800;font-size:12px;margin:10px 0}.text-muted{color:var(--muted)}
+@media(max-width:1150px){.sidebar{width:220px;flex-basis:220px}.stats{grid-template-columns:repeat(2,1fr)}.dashboard-grid,.detail-grid{grid-template-columns:1fr}main{padding:25px}.topbar{padding:0 25px}}
+@media(max-width:720px){.sidebar{position:fixed;z-index:900;transform:translateX(-100%);transition:transform .2s;width:258px}.sidebar.open{transform:translateX(0)}.mobile-menu{display:grid}.topbar{height:67px;padding:0 16px}.top-actions .date-label,.top-pill{display:none}.breadcrumb{font-size:11px}main{padding:23px 16px 40px}.page-header{align-items:flex-start;flex-direction:column}.page-header h1{font-size:25px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:16px;min-height:130px}.stat-number{font-size:27px}.dashboard-grid{gap:12px}.panel-pad{padding:16px}.toolbar{flex-direction:column;align-items:stretch}.search{max-width:none}.field-grid,.kv{grid-template-columns:1fr}.date-label{display:none}.modal{padding:20px}.data-table td,.data-table th{padding:12px;white-space:nowrap}}
+
+### FIM DO ARQUIVO: public/styles.css
+
+==================================================
+### INICIO DO ARQUIVO: public/app.js
+==================================================
+const state={view:'overview',companies:[],summary:null,selectedId:null,selectedRunId:null,terms:[],runs:[],run:null,previousRun:null,report:null,filter:'',polling:false};
+const $=(sel,root=document)=>root.querySelector(sel);
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=escapeHtml;
+const number=n=>new Intl.NumberFormat('pt-BR').format(Number(n||0));
+const today=()=>new Intl.DateTimeFormat('pt-BR',{dateStyle:'long'}).format(new Date());
+const time=iso=>{if(!iso)return '—';const d=new Date(iso.endsWith('Z')?iso:iso.replace(' ','T')+'Z');return Number.isNaN(d.valueOf())?'—':d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});};
+const $content=$('#content');
+async function request(endpoint,options={}){
+ const res=await fetch(endpoint,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+ const data=await res.json().catch(()=>({error:'Resposta inválida'}));
+ if(!res.ok)throw Error(data.error||`Erro HTTP ${res.status}`);
+ return data;
+}
+let toastTimer;
+function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4400);}
+async function reload(){
+ const [companies,summary]=await Promise.all([request('/api/companies'),request('/api/summary')]);
+ state.companies=companies;state.summary=summary;
+ if(!state.selectedId && companies[0])state.selectedId=companies[0].id;
+ if(state.selectedId && !companies.some(x=>x.id===state.selectedId))state.selectedId=companies[0]?.id||null;
+ $('#nav-count').textContent=companies.length;
+ await loadSelected();
+ render();
+}
+async function loadSelected(){
+ if(!state.selectedId){state.terms=[];state.runs=[];state.run=null;state.previousRun=null;state.report=null;return;}
+ const id=state.selectedId;
+ const [terms,runs,report]=await Promise.all([
+  request(`/api/companies/${id}/terms`),request(`/api/companies/${id}/runs`),request(`/api/companies/${id}/feedback`)]);
+ state.terms=terms;state.runs=runs;state.report=report;
+ if(!runs.some(r=>r.id===state.selectedRunId))state.selectedRunId=runs[0]?.id||null;
+ const selectedIndex=runs.findIndex(r=>r.id===state.selectedRunId);
+ const prior=selectedIndex>=0?runs[selectedIndex+1]:null;
+ const [current,previous]=await Promise.all([
+   state.selectedRunId?request(`/api/runs/${state.selectedRunId}`):Promise.resolve(null),
+   prior?request(`/api/runs/${prior.id}`):Promise.resolve(null)
+ ]);
+ state.run=current;state.previousRun=previous;
+}
+function getSelected(){return state.companies.find(c=>c.id===state.selectedId);}
+function badge(status){
+ if(!status)return '<span class="pill">Sem medição</span>';
+ const labels={QUEUED:'Na fila',RUNNING:'Em execução',COMPLETE:'Coleta finalizada',BLOCKED:'Interrompida',FAILED:'Falhou',VERIFIED:'Confirmado',REVIEW:'Revisar',NO_LIST:'Sem lista',NOT_FOUND:'Não localizado',ERROR:'Erro',PENDING:'Pendente',REJECTED:'Rejeitado'};
+ const color={COMPLETE:'good',VERIFIED:'good',RUNNING:'running',QUEUED:'running',REVIEW:'warning',BLOCKED:'error',FAILED:'error',ERROR:'error'};
+ return `<span class="pill ${color[status]||''}">${esc(labels[status]||status)}</span>`;
+}
+function header(kicker,title,description,actions=''){
+ return `<div class="page-header"><div><div class="eyebrow">${esc(kicker)}</div><h1>${esc(title)}</h1><p>${esc(description)}</p></div><div class="page-actions">${actions}</div></div>`;
+}
+function stat(icon,title,value,note){return `<div class="panel stat"><div class="stat-icon">${icon}</div><div class="stat-label">${esc(title)}</div><div class="stat-number">${number(value)}</div><div class="stat-note">${esc(note)}</div></div>`;}
+function initials(name){return name.split(/[ —-]+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('').slice(0,2);}
+function companySelector(){return `<select class="field" id="company-select" aria-label="Selecionar empresa">${state.companies.map(c=>`<option value="${c.id}" ${c.id===state.selectedId?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`;}
+function overview(){
+ const s=state.summary;
+ const companyCards=state.companies.slice(0,6).map(c=>`<div class="company-row"><div class="company-monogram">${esc(initials(c.name))}</div><div class="company-detail"><strong>${esc(c.name)}</strong><span>${esc(c.city)} · ${c.term_count} termos cadastrados</span></div>${badge(c.last_status)}<button class="action-link" data-action="choose" data-id="${c.id}">Abrir ↗</button></div>`).join('');
+ const recent=s.recent.map(r=>`<div class="activity-row"><div class="activity-mark">◎</div><div class="activity-text"><strong>${esc(r.company_name)}</strong><p>${badge(r.status)} · ${r.completed}/${r.total} termos · ${time(r.created_at)}</p></div></div>`).join('');
+ return header('INTELIGÊNCIA LOCAL','Visão geral da operação','Medições, oportunidades e relatórios da carteira em um único lugar.',`<button class="btn btn-secondary" data-action="new-company">＋ Cadastrar empresa</button><button class="btn btn-primary" data-action="nav" data-view="measurements">◎ Iniciar medição</button>`)+
+ `<section class="stats">${stat('▣','Empresas cadastradas',s.companies,'Fichas monitoradas')}${stat('⌕','Palavras-chave',s.terms,'Termos por cidade e cluster')}${stat('🏆','Posições confirmadas',s.measured,'Com evidência ou revisão humana')}${stat('◷','Aguardando revisão',s.reviews,'Não são anunciadas como conquista')}</section>
+ <section class="dashboard-grid"><div class="panel panel-pad"><div class="panel-header"><div><h2>Carteira monitorada</h2><small>Seus perfis cadastrados</small></div><button class="action-link" data-action="nav" data-view="companies">Ver todas →</button></div><div class="company-list">${companyCards||empty('Nenhuma empresa cadastrada','Cadastre sua primeira ficha para começar.')}</div></div><div class="panel panel-pad"><div class="panel-header"><div><h2>Atividade recente</h2><small>Histórico de execuções</small></div></div><div class="activity">${recent||empty('Sem medições ainda','Os registros aparecerão conforme você executar pesquisas.')}</div></div></section>
+ <div class="panel info-panel"><div class="info-symbol">✦</div><div><h3>Resultados auditáveis, sem rankings inventados.</h3><p>O sistema diferencia posições identificadas pelo ID da ficha, possíveis correspondências a revisar e buscas sem lista comparável. As posições dependem da localização configurada e da sessão do Google Maps. O sistema não usa IA nem paga por consulta.</p></div></div>`;
+}
+function empty(title,description){return `<div class="empty"><div class="empty-icon">◇</div><strong>${esc(title)}</strong><span>${esc(description)}</span></div>`;}
+function companies(){
+ const rows=state.companies.filter(c=>`${c.name} ${c.city}`.toLowerCase().includes(state.filter.toLowerCase()));
+ return header('GESTÃO DE CARTEIRA','Empresas e fichas','Cadastre perfis, organize seus clusters e acompanhe as pesquisas.',`<button class="btn btn-secondary" data-action="companies-batch">⇩ Importar empresas</button><button class="btn btn-primary" data-action="new-company">＋ Nova empresa</button>`)+
+ `<div class="toolbar"><input class="search" id="filter-companies" type="search" value="${esc(state.filter)}" placeholder="Buscar empresa ou cidade…" aria-label="Filtrar empresas"/><span class="subtle-label">${state.companies.length} EMPRESAS NO SISTEMA</span></div>
+ <div class="panel panel-pad"><div class="table-scroll"><table class="data-table"><thead><tr><th>Empresa</th><th>Localidade</th><th>Termos</th><th>Prioridade P1</th><th>Última coleta</th><th></th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.city)}</td><td>${c.term_count}</td><td>${c.p1_count}</td><td>${badge(c.last_status)}</td><td><button class="action-link" data-action="choose" data-id="${c.id}">Gerenciar →</button></td></tr>`).join('')}</tbody></table></div>${rows.length?'':empty('Nenhuma empresa encontrada','Tente outro nome ou cidade.')}</div>`;
+}
+function measurements(){
+ const company=getSelected(),r=state.run;
+ if(!company)return header('MEDIÇÃO LOCAL','Auditoria de ranking','Cadastre primeiro uma empresa.','<button class="btn btn-primary" data-action="new-company">Cadastrar empresa</button>');
+ const rows=r?.measurements||[];
+ const prevMap=new Map((state.previousRun?.measurements||[]).map(m=>[m.term_id,m]));
+ const variation=x=>{const prev=prevMap.get(x.term_id);if(!prev||x.status!=='VERIFIED'||prev.status!=='VERIFIED'||!x.position||!prev.position)return '<span class="text-muted">—</span>';const diff=prev.position-x.position;return diff>0?`<span style="color:#14846d;font-weight:800">↑ ${diff}</span>`:diff<0?`<span style="color:#bb6753;font-weight:800">↓ ${-diff}</span>`:'<span class="text-muted">=</span>';};
+ const verified=rows.filter(x=>x.status==='VERIFIED');
+ const review=rows.filter(x=>x.status==='REVIEW');
+ const first=verified.filter(x=>x.position===1).length;
+ const top3=verified.filter(x=>x.position<=3).length;
+ const progress=r?Math.round(100*r.completed/Math.max(1,r.total)):0;
+ const statusPill=r?badge(r.status):'';
+ return header('AUDITORIA EM CAMPO','Medição de posições',`Pesquise a partir do ponto de referência de ${company.city} com registros e evidências.`,`<button class="btn btn-secondary" data-action="company-edit">Editar ficha</button><button class="btn btn-primary" data-action="run-start">▶ Medir pesquisas</button>`)+
+ `<div class="detail-grid mb-20"><div class="panel panel-pad"><div class="panel-header"><div><h2>Ficha selecionada</h2><small>Identificação do perfil e região da consulta</small></div></div><div class="field-group"><label for="company-select">Empresa / Unidade</label>${companySelector()}</div><div class="kv"><div><span>Localidade</span><strong>${esc(company.city)}</strong></div><div><span>Ponto geográfico</span><strong>${company.latitude.toFixed(4)}, ${company.longitude.toFixed(4)}</strong></div><div><span>Termos cadastrados</span><strong>${state.terms.length}</strong></div><div><span>Identificador de ficha (CID)</span><strong>${esc(company.cid||'Não informado')}</strong></div></div><div class="flexline mt-20"><button class="btn btn-sm btn-secondary" data-action="term-add">＋ Adicionar termo</button><button class="btn btn-sm btn-secondary" data-action="term-batch">⇩ Importar termos</button><button class="btn btn-sm btn-muted" data-action="keywords-suggest">✦ Gerar clusters</button></div></div>
+ <div class="panel panel-pad"><div class="panel-header"><div><h2>Última coleta</h2><small>Somente resultados com posição comprovada</small></div>${statusPill}</div>
+ <div class="metric-mini"><div class="mini"><strong>${first}</strong><span>🥇 Primeiros lugares</span></div><div class="mini"><strong>${top3}</strong><span>Termos no Top 3</span></div><div class="mini"><strong>${review.length}</strong><span>Para revisar</span></div></div>
+ <div class="mt-20">${r?`<div class="flexline"><strong style="font-size:12px">Execução #${r.id}</strong><span class="run-status">${r.completed}/${r.total} pesquisas · ${time(r.created_at)}</span></div><div class="run-progress"><div style="width:${progress}%"></div></div><div class="run-status">${esc(r.message||'Coleta em andamento')} · ${progress}%${r.source==='IMPORT'?' · Importado do resultado.zip':''}</div>`:empty('Sem medições ainda','Execute uma coleta para visualizar os primeiros resultados.')}</div></div></div>
+ <div class="panel panel-pad"><div class="panel-header"><div><h2>${r?'Resultados da última medição':'Pesquisas preparadas'}</h2><small>${r?`${rows.length} pesquisas na execução #${r.id}`:`${state.terms.length} termos aguardando medição`}</small></div>${r?`<button class="btn btn-secondary btn-sm" data-action="csv-export">↓ Exportar CSV</button>`:''}</div>
+ <div class="table-scroll"><table class="data-table"><thead><tr><th>Pesquisa</th><th>Cluster</th><th>Prioridade</th><th>Posição</th><th>Variação</th><th>Resultado</th><th>Verificação</th></tr></thead><tbody>${(r?rows:state.terms).map(x=>`<tr><td><strong>${esc(x.query)}</strong></td><td>${esc(x.cluster)}</td><td><span class="tag">${esc(x.priority)}</span></td><td><strong>${r?(x.position?`${x.position}º`:x.candidate_position?`${x.candidate_position}º ?`:'—'):'—'}</strong></td><td>${r?variation(x):'—'}</td><td>${r?badge(x.status):'<span class="result-status">Não medido</span>'}</td><td>${r?`<button class="action-link" data-action="result-detail" data-id="${x.id}">Ver evidência ↗</button>`:`<button class="action-link" data-action="term-delete" data-id="${x.id}">Excluir</button>`}</td></tr>`).join('')}</tbody></table></div>${!(r?rows:state.terms).length?empty('Sem termos cadastrados','Adicione pesquisas e clusters para medir.') : ''}</div>
+ ${state.runs.length?`<div class="panel panel-pad mt-20"><div class="panel-header"><div><h2>Histórico de auditorias</h2><small>Selecione execuções anteriores para comparar as posições verificadas.</small></div></div><div class="flexline">${state.runs.map(item=>`<button class="btn btn-sm ${item.id===state.selectedRunId?'btn-primary':'btn-secondary'}" data-action="run-select" data-id="${item.id}">#${item.id} · ${time(item.created_at)} · ${item.completed}/${item.total}${item.source==='IMPORT'?' · Importado':''}</button>`).join('')}</div></div>`:''}
+ <div class="notice mt-20"><strong>Importante:</strong> a ferramenta usa um Chrome visível com consultas sequenciais, sem burlar verificações humanas. Uma execução pode precisar de validação manual, e resultados em lista patrocinada não devem contar como posição orgânica. Coordenadas são um ponto de referência, não uma grade geográfica.</div>`;
+}
+function reports(){
+ const c=getSelected(),rep=state.report;
+ if(!c)return header('COMUNICAÇÃO','Feedbacks para clientes','Cadastre uma empresa para preparar sua mensagem.');
+ return header('COMUNICAÇÃO COM EVIDÊNCIAS','Feedback para WhatsApp','Uma mensagem profissional, construída exclusivamente com as colocações confirmadas.',`<button class="btn btn-secondary" data-action="nav" data-view="measurements">Ver medições</button><button class="btn btn-primary" data-action="copy-feedback">▣ Copiar feedback</button>`)+
+ `<div class="detail-grid"><div class="panel panel-pad"><div class="panel-header"><div><h2>Prévia da mensagem</h2><small>Pronta para copiar após validar os resultados</small></div></div><div class="field-group"><label for="company-select">Empresa / Unidade</label>${companySelector()}</div><div class="report-box" id="report-text">${esc(rep?.text||'')}</div><div class="flexline mt-16"><button class="btn btn-primary" data-action="copy-feedback">▣ Copiar para WhatsApp</button><button class="btn btn-secondary" data-action="csv-export">↓ Baixar medições</button></div></div><div class="panel panel-pad"><div class="panel-header"><div><h2>Qualidade da evidência</h2><small>Critérios que protegem sua entrega</small></div></div><div class="metric-mini"><div class="mini"><strong>${rep?.verifiedCount||0}</strong><span>Colocações confirmadas</span></div><div class="mini"><strong>${rep?.reviewCount||0}</strong><span>Em conferência</span></div></div><hr class="sep"/><div class="activity"><div class="activity-row"><div class="activity-mark">✓</div><div class="activity-text"><strong>ID do perfil confirmado ou revisão humana</strong><p>Esses termos podem aparecer como posições no feedback.</p></div></div><div class="activity-row"><div class="activity-mark">◎</div><div class="activity-text"><strong>Correspondência pelo nome exige revisão</strong><p>Nunca anunciamos um 1º lugar por similaridade apenas.</p></div></div><div class="activity-row"><div class="activity-mark">↗</div><div class="activity-text"><strong>Localização e momento fazem diferença</strong><p>O feedback informa que as posições são observações, não garantias municipais.</p></div></div></div></div></div>`;
+}
+function render(){
+ const names={overview:'Visão geral',companies:'Empresas',measurements:'Medições',reports:'Feedbacks'};
+ $('#crumb').textContent=names[state.view]||'';
+ $$('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.view===state.view));
+ $content.innerHTML=({overview,companies,measurements,reports}[state.view]||overview)();
+}
+function $$(sel){return [...document.querySelectorAll(sel)];}
+function navigate(view){state.view=view;state.filter='';$('#sidebar').classList.remove('open');render();}
+function modal(title,content){$('#modal-title').textContent=title;$('#modal-body').innerHTML=content;$('#modal-backdrop').classList.remove('hidden');}
+function closeModal(){$('#modal-backdrop').classList.add('hidden');}
+function companyForm(existing){const c=existing||{};modal(existing?'Editar empresa':'Cadastrar empresa',`<form id="company-form"><div class="field-group"><label>Nome da empresa / Unidade</label><input required maxlength="160" class="field" name="name" value="${esc(c.name||'')}" placeholder="Ex.: Jares Móveis — Lavras"/></div><div class="field-group"><label>Cidade</label><input required maxlength="120" class="field" name="city" value="${esc(c.city||'')}" placeholder="Ex.: Lavras, MG"/></div><div class="field-grid"><div class="field-group"><label>Latitude</label><input required type="number" step="any" class="field" name="latitude" value="${c.latitude??''}" placeholder="-21.245"/></div><div class="field-group"><label>Longitude</label><input required type="number" step="any" class="field" name="longitude" value="${c.longitude??''}" placeholder="-45.00"/></div></div><div class="field-group"><label>CID (ID hexadecimal, se conhecido)</label><input class="field" name="cid" value="${esc(c.cid||'')}" placeholder="Ex.: d16aefdbdee3d709"/></div><div class="field-group"><label>Link da ficha no Google Maps (opcional)</label><input class="field" name="maps_url" value="${esc(c.maps_url||'')}" placeholder="https://www.google.com/maps/place/..."/></div><p class="fine-print">O identificador específico da ficha evita confundir unidades com nomes semelhantes. Sem ele, as posições encontradas precisarão de confirmação manual.</p><div class="modal-actions"><button type="button" class="btn btn-secondary" data-action="modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Salvar empresa</button></div></form>`);
+ $('#company-form').onsubmit=async event=>{event.preventDefault();const b=Object.fromEntries(new FormData(event.target).entries());try{await request(existing?`/api/companies/${existing.id}`:'/api/companies',{method:existing?'PUT':'POST',body:JSON.stringify(b)});closeModal();toast('Empresa salva!');await reload();}catch(e){toast(e.message)}};
+}
+function batchCompanies(){
+ modal('Importar várias empresas',`<p class="fine-print">Cole uma empresa por linha, separando as colunas por ponto e vírgula: <strong>nome;cidade;latitude;longitude;CID</strong>. CID é opcional. Informe as coordenadas da região de pesquisa em cada cidade. Revise as unidades antes de medir.</p><form id="companies-batch-form"><div class="field-group"><textarea required name="bulk" placeholder="Loja Exemplo;Três Corações;-21.7;-45.26;abcde1234567890f\nLoja 2;Lavras;-21.25;-44.99;"></textarea></div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="modal-close">Cancelar</button><button class="btn btn-primary" type="submit">Importar</button></div></form>`);
+ $('#companies-batch-form').onsubmit=async e=>{e.preventDefault();const lines=new FormData(e.target).get('bulk').trim().split(/\r?\n/);
+  const companies=lines.map(line=>{const [name,city,latitude,longitude,cid='']=line.split(';');return {name:name?.trim(),city:city?.trim(),latitude,longitude,cid:cid.trim()};});
+  try{const result=await request('/api/companies/batch',{method:'POST',body:JSON.stringify({companies})});closeModal();toast(`${result.inserted} empresas importadas.`);await reload();}catch(err){toast(err.message)}
+ };
+}
+function termForm(){modal('Adicionar pesquisa',`<form id="term-form"><div class="field-group"><label>Pesquisa comercial exata</label><input class="field" required maxlength="240" name="query" placeholder="loja de móveis em Três Corações"/></div><div class="field-group"><label>Cluster</label><input class="field" required name="cluster" value="Loja de móveis"/></div><div class="field-group"><label>Prioridade</label><select name="priority" class="field"><option value="P1">P1 — Principal</option><option value="P2">P2 — Secundária</option><option value="P3">P3 — Exploratória</option></select></div><div class="modal-actions"><button type="button" class="btn btn-secondary" data-action="modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Adicionar pesquisa</button></div></form>`);
+ $('#term-form').onsubmit=async e=>{e.preventDefault();try{await request(`/api/companies/${state.selectedId}/terms`,{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.target).entries()))});closeModal();toast('Termo cadastrado.');await reload();}catch(err){toast(err.message);}};
+}
+function batchForm(){modal('Importar termos em lote',`<p class="fine-print">Cole uma pesquisa por linha no formato <strong>termo;cluster;prioridade</strong>. Exemplo: <code>sofás em Lavras;Sofás;P1</code>. As duplicatas serão ignoradas.</p><form id="batch-form"><div class="field-group"><textarea name="bulk" required placeholder="loja de móveis em Lavras;Loja de móveis;P1\nsofas em Lavras;Sofás;P2"></textarea></div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="modal-close">Cancelar</button><button class="btn btn-primary" type="submit">Importar pesquisas</button></div></form>`);
+ $('#batch-form').onsubmit=async e=>{e.preventDefault();const content=new FormData(e.target).get('bulk');const terms=content.trim().split(/\r?\n/).map(l=>{const [query,cluster='Geral',priority='P2']=l.split(';');return {query:query.trim(),cluster:cluster.trim(),priority:priority.trim().toUpperCase()};});try{const r=await request(`/api/companies/${state.selectedId}/terms/batch`,{method:'POST',body:JSON.stringify({terms})});toast(`${r.inserted} termos importados.`);closeModal();await reload();}catch(err){toast(err.message)}};
+}
+async function keywordsSuggest(){
+ const niches=await request('/api/niches');
+ modal('Gerador de clusters sem IA',`<p class="fine-print">Selecione um segmento e descreva apenas produtos ou serviços efetivamente oferecidos pela empresa. O gerador cria <strong>sugestões de pesquisa, não medições</strong>. Revise o catálogo antes de importar.</p><form id="suggest-form"><div class="field-group"><label>Nicho principal</label><select class="field" name="niche">${niches.map(n=>`<option value="${esc(n.value)}">${esc(n.title)}</option>`).join('')}</select></div><div class="field-group"><label>Produtos ou serviços reais (separados por vírgula)</label><textarea name="products" placeholder="Ex.: sofás retráteis, colchões, mesas de jantar"></textarea></div><div class="modal-actions"><button type="button" class="btn btn-secondary" data-action="modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Gerar sugestões</button></div></form><div id="suggest-results"></div>`);
+ $('#suggest-form').onsubmit=async e=>{
+  e.preventDefault();
+  const data=Object.fromEntries(new FormData(e.target).entries());
+  try{
+   const terms=await request('/api/keywords/suggest',{method:'POST',body:JSON.stringify({companyId:state.selectedId,niche:data.niche,products:data.products.split(',').map(x=>x.trim()).filter(Boolean)})});
+   const container=$('#suggest-results');
+   container.innerHTML=`<hr class="sep"/><h3 style="font-size:14px">${terms.length} sugestões geradas</h3><p class="fine-print">Desmarque termos incompatíveis com o catálogo da empresa. Duplicatas existentes serão ignoradas.</p><div style="max-height:260px;overflow:auto">${terms.map((t,i)=>`<label style="display:flex;gap:9px;align-items:start;padding:9px;border-bottom:1px solid #edf0f0;font-size:12px"><input type="checkbox" data-keyword-index="${i}" checked/><span><strong>${esc(t.query)}</strong><small style="display:block;color:#799097">${esc(t.cluster)} · ${esc(t.priority)}</small></span></label>`).join('')}</div><div class="modal-actions"><button id="import-suggestions" class="btn btn-primary">Importar selecionados</button></div>`;
+   $('#import-suggestions').onclick=async()=>{
+    const selected=[...container.querySelectorAll('[data-keyword-index]:checked')].map(c=>terms[Number(c.dataset.keywordIndex)]);
+    try{const outcome=await request(`/api/companies/${state.selectedId}/terms/batch`,{method:'POST',body:JSON.stringify({terms:selected})});closeModal();toast(`${outcome.inserted} termos importados.`);await reload();}catch(e){toast(e.message)}
+   };
+  }catch(err){toast(err.message)}
+ };
+}
+function runStart(){const c=getSelected();if(!c)return;modal('Iniciar medição no Google Maps',`<div class="notice"><strong>Antes de começar:</strong> confirme a cidade, as coordenadas e o CID da ficha. O Chrome será aberto na sua máquina. Não feche a janela durante a coleta. O Google pode solicitar verificação humana; o sistema interromperá a execução nesse caso.</div><form id="run-form"><div class="field-group mt-20"><label>Escopo da coleta</label><select class="field" name="mode"><option value="priority">Prioridade P1 — ${state.terms.filter(t=>t.priority==='P1').length} termos</option><option value="all">Todos os termos — ${state.terms.length}</option></select></div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="modal-close">Cancelar</button><button class="btn btn-primary" type="submit">▶ Iniciar agora</button></div></form>`);
+ $('#run-form').onsubmit=async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.target).entries());try{const r=await request(`/api/companies/${state.selectedId}/runs`,{method:'POST',body:JSON.stringify(b)});closeModal();toast(`Medição #${r.runId} iniciada. Chrome será aberto.`);await reload();navigate('measurements');}catch(err){toast(err.message)}};
+}
+function resultDetail(id){const r=state.run?.measurements.find(x=>x.id===id);if(!r)return;
+ const results=r.results_json||[];
+ const list=results.filter(x=>!x.promoted).slice(0,25).map((x,i)=>`<div style="padding:10px 0;border-bottom:1px solid #ebefee"><strong>${i+1}º — ${esc(x.name)}</strong><div class="fine-print">${esc((x.detail||'').slice(0,150))}</div></div>`).join('');
+ modal('Evidência da medição',`<p style="font-size:13px"><strong>${esc(r.query)}</strong></p><div class="flexline mb-20">${badge(r.status)}<span class="tag">${esc(r.confidence)}</span><span class="text-muted" style="font-size:11px">${time(r.measured_at)}</span></div><div class="kv"><div><span>Posição confirmada</span><strong>${r.position?`${r.position}º`:'—'}</strong></div><div><span>Posição candidata</span><strong>${r.candidate_position?`${r.candidate_position}º`:'—'}</strong></div></div><div class="flexline mt-16"><button class="btn btn-sm btn-secondary" data-action="open-evidence" data-id="${id}" ${r.screenshot?'':'disabled'}>↗ Abrir print</button><button class="btn btn-sm btn-secondary" data-action="open-search" data-url="${esc(r.search_url)}" ${r.search_url?'':'disabled'}>↗ Abrir busca</button></div>${r.review_note?`<p class="fine-print">Nota: ${esc(r.review_note)}</p>`:''}<details class="mt-20"><summary>Ver ${results.length} resultados capturados</summary><div style="max-height:320px;overflow:auto">${list||'<span class="fine-print">Sem lista de resultados disponível.</span>'}</div></details>${r.status==='REVIEW'&&r.candidate_position?`<p class="notice mt-20">A correspondência foi feita apenas pelo nome. Confirme no print se é a unidade correta, se não há anúncios interferindo e se a ordem registrada está correta antes de aprovar.</p><div class="modal-actions"><button class="btn btn-danger" data-action="review" data-id="${id}" data-decision="reject">Rejeitar</button><button class="btn btn-primary" data-action="review" data-id="${id}" data-decision="confirm">✓ Confirmar posição</button></div>`:''}`);
+}
+async function copyReport(){try{await navigator.clipboard.writeText(state.report?.text||'');toast('Feedback copiado. Cole no WhatsApp!');}catch(e){toast('Cópia indisponível: selecione o texto da prévia.');}}
+async function handleAction(button){
+ const action=button.dataset.action;
+ if(action==='nav')return navigate(button.dataset.view);
+ if(action==='new-company')return companyForm();
+ if(action==='companies-batch')return batchCompanies();
+ if(action==='modal-close')return closeModal();
+ if(action==='company-edit')return companyForm(getSelected());
+ if(action==='term-add')return termForm();
+ if(action==='term-batch')return batchForm();
+ if(action==='keywords-suggest')return keywordsSuggest();
+ if(action==='run-start')return runStart();
+ if(action==='copy-feedback')return copyReport();
+ if(action==='csv-export'){if(state.selectedId)window.open(`/api/companies/${state.selectedId}/export`,'_blank');return;}
+ if(action==='open-evidence')return window.open(`/api/measurements/${Number(button.dataset.id)}/evidence`,'_blank','noopener');
+ if(action==='open-search'){const u=button.dataset.url;if(u.startsWith('https://www.google.com/maps/'))window.open(u,'_blank','noopener');return;}
+ if(action==='result-detail')return resultDetail(Number(button.dataset.id));
+ if(action==='run-select'){state.selectedRunId=Number(button.dataset.id);await loadSelected();return render();}
+ if(action==='choose'){state.selectedId=Number(button.dataset.id);state.selectedRunId=null;await loadSelected();return navigate('measurements');}
+ if(action==='term-delete'){
+  if(!confirm('Excluir esta pesquisa? Os registros de medições vinculados também serão excluídos.'))return;
+  try{await request(`/api/terms/${Number(button.dataset.id)}`,{method:'DELETE'});toast('Termo excluído.');await reload();}catch(e){toast(e.message)}return;
+ }
+ if(action==='review'){
+  const decision=button.dataset.decision;
+  if(!confirm(decision==='confirm'?'Você conferiu a imagem, a identidade da unidade e a posição no resultado orgânico?':'Rejeitar esta correspondência?'))return;
+  try{await request(`/api/measurements/${Number(button.dataset.id)}/review`,{method:'POST',body:JSON.stringify({decision})});closeModal();toast('Revisão registrada.');await reload();}catch(e){toast(e.message)}
+ }
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(b)void handleAction(b).catch(err=>toast(err.message));});
+document.addEventListener('change',e=>{if(e.target.id==='company-select'){state.selectedId=Number(e.target.value);state.selectedRunId=null;void loadSelected().then(render).catch(err=>toast(err.message));}});
+document.addEventListener('input',e=>{if(e.target.id==='filter-companies'){const pos=e.target.selectionStart;state.filter=e.target.value;render();$('#filter-companies')?.focus();$('#filter-companies')?.setSelectionRange(pos,pos);}});
+$('#menu-button').onclick=()=>$('#sidebar').classList.toggle('open');
+$('#modal-close').onclick=closeModal;
+$('#modal-backdrop').addEventListener('click',e=>{if(e.target.id==='modal-backdrop')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+$('#clock').textContent=today();
+reload().catch(e=>{$content.innerHTML=empty('Não foi possível carregar o sistema',e.message);});
+setInterval(async()=>{
+ if(state.polling||!state.companies.length)return;
+ const status=state.run?.status;
+ if(state.view==='measurements'&&['RUNNING','QUEUED'].includes(status)){
+  state.polling=true;try{await reload();}catch(e){console.warn(e);}finally{state.polling=false;}
+ }
+},4000);
+
+### FIM DO ARQUIVO: public/app.js
+
+==================================================
+### INICIO DO ARQUIVO: src/server.js
+==================================================
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createDb,insertSeed,insertAdditionalSeed,getCompany,getRun,getLatestRun,getMeasurements} from './db.js';
+import {buildReport,csv} from './services/report.js';
+import {makeQueue} from './services/measurement.js';
+import {suggestKeywords,listNiches} from './services/keywords.js';
+
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const DATA=process.env.NEXUS_DATA_DIR?path.resolve(process.env.NEXUS_DATA_DIR):path.join(ROOT,'local-data');
+const OUTPUT=path.join(DATA,'evidence');
+const PORT=Number(process.env.PORT||4177);
+if(!Number.isInteger(PORT)||PORT<1024||PORT>65535)throw Error('PORT inválida');
+fs.mkdirSync(OUTPUT,{recursive:true});
+const db=createDb(path.join(DATA,'nexus.sqlite'));
+try{const seed=JSON.parse(fs.readFileSync(path.join(ROOT,'data/jares-seed.json'),'utf8'));insertSeed(db,seed);}catch(e){console.error('Seed indisponível:',e.message);}
+try{const extra=JSON.parse(fs.readFileSync(path.join(ROOT,'data/jares-2-unidades.json'),'utf8'));insertAdditionalSeed(db,extra);}catch(e){console.error('Cadastro adicional indisponivel:',e.message);}
+const queue=makeQueue({db,outputDir:OUTPUT});
+queue.recover();
+
+function send(res,status,data,contentType='application/json; charset=utf-8'){
+ res.writeHead(status,{'Content-Type':contentType,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"});
+ res.end(contentType.startsWith('application/json')?JSON.stringify(data):data);
+}
+function error(res,status,message){send(res,status,{error:message});}
+async function parseBody(req){
+ let chunks=[],bytes=0;
+ for await(const chunk of req){bytes+=chunk.length;if(bytes>1024*1024)throw Object.assign(Error('Payload acima de 1 MB'),{http:413});chunks.push(chunk);}
+ try{return JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');}catch{throw Object.assign(Error('JSON inválido'),{http:400});}
+}
+function requiredText(str,max=200){if(typeof str!=='string'||!str.trim()||str.trim().length>max)throw Object.assign(Error('Texto obrigatório ou grande demais'),{http:400});return str.trim();}
+function idOf(x){const n=Number(x);if(!Number.isSafeInteger(n)||n<1)throw Object.assign(Error('ID inválido'),{http:400});return n;}
+function companyPayload(body){
+ const name=requiredText(body.name,160),city=requiredText(body.city,120);
+ const latitude=Number(body.latitude),longitude=Number(body.longitude);
+ if(!Number.isFinite(latitude)||Math.abs(latitude)>90||!Number.isFinite(longitude)||Math.abs(longitude)>180)throw Object.assign(Error('Latitude/longitude inválidas'),{http:400});
+ const cid=String(body.cid||'').replace(/^0x/i,'').trim().toLowerCase();
+ if(cid&&!/^[0-9a-f]{8,20}$/.test(cid))throw Object.assign(Error('CID deve ser hexadecimal'),{http:400});
+ const mapsUrl=String(body.maps_url||'').trim();
+ if(mapsUrl && (mapsUrl.length>1500||!/^https:\/\/(www\.)?google\.com\/maps\//i.test(mapsUrl)))throw Object.assign(Error('URL deve ser HTTPS do Google Maps'),{http:400});
+ return [name,city,latitude,longitude,cid,mapsUrl];
+}
+function termPayload(body){
+ const query=requiredText(body.query,240),cluster=requiredText(body.cluster||'Geral',90),priority=body.priority||'P2';
+ if(!['P1','P2','P3'].includes(priority))throw Object.assign(Error('Prioridade inválida'),{http:400});
+ return [query,cluster,priority];
+}
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
+function staticFile(res,p){
+ const safePath=p==='/'?'/index.html':p;
+ const filepath=path.resolve(ROOT,'public','.'+safePath);
+ if(!filepath.startsWith(path.join(ROOT,'public')+path.sep))return error(res,403,'Acesso negado');
+ try{const stats=fs.statSync(filepath);if(!stats.isFile())return error(res,404,'Não encontrado');const body=fs.readFileSync(filepath);res.writeHead(200,{'Content-Type':mime[path.extname(filepath)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':'no-cache'});res.end(body);}catch{return error(res,404,'Não encontrado');}
+}
+async function api(req,res,p,url){
+ const method=req.method;
+ if(method!=='GET'&&method!=='HEAD'){
+   const origin=req.headers.origin;
+   if(origin){try{const u=new URL(origin);if(!['localhost','127.0.0.1'].includes(u.hostname)||u.port!==String(PORT))return error(res,403,'Origem não permitida');}catch{return error(res,403,'Origem inválida');}}
+ }
+ if(method==='GET'&&p==='/api/niches')return send(res,200,listNiches());
+ if(method==='POST'&&p==='/api/keywords/suggest'){
+   const body=await parseBody(req);const company=getCompany(db,idOf(body.companyId));
+   if(!company)return error(res,404,'Empresa não encontrada');
+   const products=Array.isArray(body.products)?body.products.slice(0,30):[];
+   if(products.some(x=>typeof x!=='string'||x.length>100))return error(res,400,'Lista de produtos inválida');
+   return send(res,200,suggestKeywords({city:company.city,niche:String(body.niche||'generico'),products}));
+ }
+ if(method==='GET'&&p==='/api/health')return send(res,200,{ok:true,version:'1.2.0',queue:{running:queue.running,pending:queue.pending}});
+ if(method==='GET'&&p==='/api/companies'){
+   const rows=db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM terms t WHERE t.company_id=c.id) term_count,
+      (SELECT COUNT(*) FROM terms t WHERE t.company_id=c.id AND t.priority='P1') p1_count,
+      (SELECT status FROM runs r WHERE r.company_id=c.id ORDER BY r.id DESC LIMIT 1) last_status,
+      (SELECT id FROM runs r WHERE r.company_id=c.id ORDER BY r.id DESC LIMIT 1) last_run_id
+      FROM companies c ORDER BY c.id`).all();
+   return send(res,200,rows);
+ }
+ if(method==='GET'&&p==='/api/summary'){
+   const companies=db.prepare('SELECT COUNT(*) n FROM companies').get().n;
+   const terms=db.prepare('SELECT COUNT(*) n FROM terms').get().n;
+   const completed=db.prepare("SELECT COUNT(*) n FROM runs WHERE status='COMPLETE'").get().n;
+   const measured=db.prepare("SELECT COUNT(*) n FROM measurements WHERE status='VERIFIED'").get().n;
+   const reviews=db.prepare("SELECT COUNT(*) n FROM measurements WHERE status='REVIEW'").get().n;
+   const top1=db.prepare("SELECT COUNT(*) n FROM measurements WHERE status='VERIFIED' AND position=1").get().n;
+   const recent=db.prepare(`SELECT r.id,r.status,r.total,r.completed,r.created_at,c.name company_name FROM runs r JOIN companies c ON c.id=r.company_id ORDER BY r.id DESC LIMIT 8`).all();
+   return send(res,200,{companies,terms,completed,measured,reviews,top1,recent});
+ }
+ if(method==='POST'&&p==='/api/companies/batch'){
+   const body=await parseBody(req);
+   if(!Array.isArray(body.companies)||body.companies.length>250)return error(res,400,'Envie até 250 empresas');
+   const values=body.companies.map(companyPayload);
+   const stmt=db.prepare('INSERT INTO companies(name,city,latitude,longitude,cid,maps_url) VALUES (?,?,?,?,?,?)');
+   db.exec('BEGIN');let count=0;
+   try{for(const item of values){stmt.run(...item);count++;}db.exec('COMMIT');}
+   catch(e){db.exec('ROLLBACK');throw e;}
+   return send(res,200,{inserted:count});
+ }
+ if(method==='POST'&&p==='/api/companies'){
+   const fields=companyPayload(await parseBody(req));
+   const r=db.prepare('INSERT INTO companies(name,city,latitude,longitude,cid,maps_url) VALUES (?,?,?,?,?,?)').run(...fields);
+   return send(res,201,getCompany(db,Number(r.lastInsertRowid)));
+ }
+ let m=p.match(/^\/api\/companies\/(\d+)$/);
+ if(m){const companyId=idOf(m[1]);if(method==='GET')return getCompany(db,companyId)?send(res,200,getCompany(db,companyId)):error(res,404,'Empresa não encontrada');
+   if(method==='PUT'){const fields=companyPayload(await parseBody(req));const info=db.prepare('UPDATE companies SET name=?,city=?,latitude=?,longitude=?,cid=?,maps_url=? WHERE id=?').run(...fields,companyId);return info.changes?send(res,200,getCompany(db,companyId)):error(res,404,'Empresa não encontrada');}}
+ m=p.match(/^\/api\/companies\/(\d+)\/terms$/);
+ if(m){const companyId=idOf(m[1]);if(!getCompany(db,companyId))return error(res,404,'Empresa não encontrada');
+   if(method==='GET')return send(res,200,db.prepare('SELECT * FROM terms WHERE company_id=? ORDER BY priority,cluster,query').all(companyId));
+   if(method==='POST'){
+     const fields=termPayload(await parseBody(req));
+     try{const result=db.prepare('INSERT INTO terms(company_id,query,cluster,priority) VALUES(?,?,?,?)').run(companyId,...fields);return send(res,201,db.prepare('SELECT * FROM terms WHERE id=?').get(Number(result.lastInsertRowid)));}
+     catch(e){if(e.message.includes('UNIQUE'))return error(res,409,'Termo já cadastrado');throw e;}
+   }
+ }
+ m=p.match(/^\/api\/companies\/(\d+)\/terms\/batch$/);
+ if(m&&method==='POST'){
+   const id=idOf(m[1]);if(!getCompany(db,id))return error(res,404,'Empresa não encontrada');
+   const body=await parseBody(req);if(!Array.isArray(body.terms)||body.terms.length>500) return error(res,400,'Envie até 500 termos');
+   const terms=body.terms.map(termPayload);
+   const stmt=db.prepare('INSERT OR IGNORE INTO terms(company_id,query,cluster,priority) VALUES(?,?,?,?)');let inserted=0;
+   db.exec('BEGIN');try{for(const t of terms)inserted+=Number(stmt.run(id,...t).changes);db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
+   return send(res,200,{inserted,submitted:terms.length});
+ }
+ m=p.match(/^\/api\/terms\/(\d+)$/);
+ if(m&&method==='DELETE'){
+   const info=db.prepare('DELETE FROM terms WHERE id=?').run(idOf(m[1]));return send(res,200,{deleted:info.changes>0});
+ }
+ m=p.match(/^\/api\/companies\/(\d+)\/runs$/);
+ if(m){const id=idOf(m[1]);if(!getCompany(db,id))return error(res,404,'Empresa não encontrada');
+   if(method==='GET')return send(res,200,db.prepare('SELECT * FROM runs WHERE company_id=? ORDER BY id DESC LIMIT 40').all(id));
+   if(method==='POST'){
+     const body=await parseBody(req),mode=body.mode||'priority';
+     if(!['priority','all'].includes(mode))return error(res,400,'Modo inválido');
+     const active=db.prepare("SELECT id FROM runs WHERE company_id=? AND status IN ('QUEUED','RUNNING')").get(id);
+     if(active)return error(res,409,'Já existe medição pendente para essa empresa');
+     const terms=db.prepare(mode==='priority'?"SELECT id FROM terms WHERE company_id=? AND priority='P1' ORDER BY cluster,query":"SELECT id FROM terms WHERE company_id=? ORDER BY priority,cluster,query").all(id);
+     if(!terms.length)return error(res,400,'Nenhuma pesquisa cadastrada para o modo selecionado');
+     const insert=db.prepare('INSERT INTO runs(company_id,mode,total) VALUES(?,?,?)');const add=db.prepare('INSERT INTO measurements(run_id,term_id) VALUES(?,?)');let runId;
+     db.exec('BEGIN');try{runId=Number(insert.run(id,mode,terms.length).lastInsertRowid);for(const t of terms)add.run(runId,t.id);db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
+     queue.enqueue(runId);return send(res,202,{runId,status:'QUEUED',terms:terms.length});
+   }
+ }
+ m=p.match(/^\/api\/runs\/(\d+)$/);
+ if(m&&method==='GET'){const run=getRun(db,idOf(m[1]));return run?send(res,200,{...run,measurements:getMeasurements(db,run.id)}):error(res,404,'Execução não encontrada');}
+ m=p.match(/^\/api\/companies\/(\d+)\/feedback$/);
+ if(m&&method==='GET'){const report=buildReport(db,idOf(m[1]));return report?send(res,200,{...report,measurements:undefined}):error(res,404,'Empresa não encontrada');}
+ m=p.match(/^\/api\/companies\/(\d+)\/export$/);
+ if(m&&method==='GET'){const company=getCompany(db,idOf(m[1]));if(!company)return error(res,404,'Empresa não encontrada');const run=getLatestRun(db,company.id);const rows=run?getMeasurements(db,run.id):[];res.setHeader('Content-Disposition',`attachment; filename="ranking_empresa_${company.id}.csv"`);return send(res,200,csv(rows),'text/csv; charset=utf-8');}
+ m=p.match(/^\/api\/measurements\/(\d+)\/review$/);
+ if(m&&method==='POST'){
+   const id=idOf(m[1]);const row=db.prepare('SELECT * FROM measurements WHERE id=?').get(id);if(!row)return error(res,404,'Medição não encontrada');
+   const body=await parseBody(req);if(!['confirm','reject'].includes(body.decision))return error(res,400,'Decisão inválida');
+   if(!['REVIEW','VERIFIED'].includes(row.status))return error(res,400,'Somente resultados encontrados podem ser revisados');
+   if(body.decision==='confirm'&&(!row.candidate_position&&!row.position))return error(res,400,'Não há posição candidata para confirmar');
+   const note=String(body.note||'').slice(0,500);
+   if(body.decision==='confirm')db.prepare("UPDATE measurements SET status='VERIFIED',position=?,candidate_position=NULL,confidence='HUMAN_REVIEW',review_note=? WHERE id=?").run(row.candidate_position||row.position,note,id);
+   else db.prepare("UPDATE measurements SET status='REJECTED',position=NULL,candidate_position=NULL,review_note=? WHERE id=?").run(note,id);
+   return send(res,200,{ok:true});
+ }
+ m=p.match(/^\/api\/measurements\/(\d+)\/evidence$/);
+ if(m&&method==='GET'){
+   const row=db.prepare('SELECT screenshot FROM measurements WHERE id=?').get(idOf(m[1]));
+   if(!row||!row.screenshot)return error(res,404,'Print indisponível');
+   const filepath=path.resolve(OUTPUT,row.screenshot);
+   if(!filepath.startsWith(OUTPUT+path.sep)||!fs.existsSync(filepath))return error(res,404,'Print indisponível');
+   const bytes=fs.readFileSync(filepath);res.writeHead(200,{'Content-Type':'image/png','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});return res.end(bytes);
+ }
+ return error(res,404,'Rota não encontrada');
+}
+const server=http.createServer(async(req,res)=>{
+ try{
+   const url=new URL(req.url||'/',`http://127.0.0.1:${PORT}`);
+   if(url.pathname.startsWith('/api/'))return await api(req,res,url.pathname,url);
+   if(req.method==='GET')return staticFile(res,url.pathname);
+   return error(res,405,'Método não permitido');
+ }catch(e){console.error(e);return error(res,e.http||500,e.http?e.message:'Erro interno');}
+});
+// Binding exclusively to localhost means no remote access by default.
+server.listen(PORT,'127.0.0.1',()=>console.log(`\nNEXUS LOCAL RANK TRACKER iniciado em http://127.0.0.1:${PORT}\nBanco e evidências: ${DATA}\n`));
+process.on('SIGINT',()=>{server.close(()=>{db.close();process.exit(0);});});
+
+### FIM DO ARQUIVO: src/server.js
+
+==================================================
+### INICIO DO ARQUIVO: src/db.js
+==================================================
+import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
+import path from 'node:path';
+
+export function createDb(filename) {
+  fs.mkdirSync(path.dirname(filename), { recursive: true });
+  const db = new DatabaseSync(filename);
+  db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
+    CREATE TABLE IF NOT EXISTS companies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+      city TEXT NOT NULL, latitude REAL NOT NULL, longitude REAL NOT NULL,
+      cid TEXT NOT NULL DEFAULT '', maps_url TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS terms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      query TEXT NOT NULL, cluster TEXT NOT NULL DEFAULT 'Geral',
+      priority TEXT NOT NULL DEFAULT 'P2' CHECK(priority IN ('P1','P2','P3')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(company_id, query)
+    );
+    CREATE TABLE IF NOT EXISTS runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'QUEUED', mode TEXT NOT NULL DEFAULT 'all',
+      started_at TEXT, ended_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      total INTEGER NOT NULL DEFAULT 0, completed INTEGER NOT NULL DEFAULT 0,
+      message TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS measurements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+      term_id INTEGER NOT NULL REFERENCES terms(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'PENDING', position INTEGER,
+      candidate_position INTEGER, confidence TEXT NOT NULL DEFAULT 'NONE',
+      screenshot TEXT NOT NULL DEFAULT '', search_url TEXT NOT NULL DEFAULT '',
+      results_json TEXT NOT NULL DEFAULT '[]', observed_count INTEGER NOT NULL DEFAULT 0,
+      measured_at TEXT, review_note TEXT NOT NULL DEFAULT '',
+      UNIQUE(run_id, term_id)
+    );
+    CREATE TABLE IF NOT EXISTS imported_batches (
+      digest TEXT PRIMARY KEY, created_at TEXT NOT NULL, source_name TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_terms_company ON terms(company_id);
+    CREATE INDEX IF NOT EXISTS idx_runs_company ON runs(company_id, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_measurements_run ON measurements(run_id);
+  `);
+  if (!db.prepare("PRAGMA table_info(runs)").all().some(c=>c.name==='source')){
+    db.exec("ALTER TABLE runs ADD COLUMN source TEXT NOT NULL DEFAULT 'LIVE'");
+  }
+  return db;
+}
+export function insertSeed(db, records) {
+  const count = db.prepare('SELECT COUNT(*) as n FROM companies').get().n;
+  if (count) return 0;
+  const add = db.prepare('INSERT INTO companies(name,city,latitude,longitude,cid,maps_url) VALUES (?,?,?,?,?,?)');
+  const addTerm = db.prepare('INSERT OR IGNORE INTO terms(company_id, query, cluster, priority) VALUES (?,?,?,?)');
+  db.exec('BEGIN');
+  try {
+    for (const shop of records) {
+      const result=add.run(shop.unit, shop.city, shop.lat, shop.lon, shop.cid||'', shop.mapsUrl||'');
+      const id=Number(result.lastInsertRowid);
+      for (const term of shop.terms) addTerm.run(id, term.term, term.cluster, term.priority);
+    }
+    db.exec('COMMIT');
+    return records.length;
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
+export function getCompany(db,id){return db.prepare('SELECT * FROM companies WHERE id=?').get(id);}
+export function getRun(db,id){return db.prepare(`SELECT r.*,c.name company_name,c.city FROM runs r JOIN companies c ON c.id=r.company_id WHERE r.id=?`).get(id);}
+export function getLatestRun(db,companyId){return db.prepare('SELECT * FROM runs WHERE company_id=? ORDER BY id DESC LIMIT 1').get(companyId);}
+export function getMeasurements(db,runId){return db.prepare(`SELECT m.*,t.query,t.cluster,t.priority FROM measurements m JOIN terms t ON t.id=m.term_id WHERE m.run_id=? ORDER BY CASE t.priority WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 ELSE 3 END, t.cluster,t.query`).all(runId).map(m=>({...m,results_json:JSON.parse(m.results_json||'[]')}));}
+
+/** Importa novas unidades e consultas sem modificar cadastros ou histórico existentes.
+ * Vincula por CID exato; se o mesmo nome existir com CID diferente, interrompe para revisao. */
+export function insertAdditionalSeed(db,records){
+ const byCid=db.prepare('SELECT * FROM companies WHERE lower(cid)=lower(?)');
+ const byName=db.prepare('SELECT * FROM companies WHERE name=?');
+ const addCompany=db.prepare('INSERT INTO companies(name,city,latitude,longitude,cid,maps_url) VALUES(?,?,?,?,?,?)');
+ const addTerm=db.prepare('INSERT OR IGNORE INTO terms(company_id,query,cluster,priority) VALUES(?,?,?,?)');
+ let companiesAdded=0,termsAdded=0;
+ db.exec('BEGIN');
+ try{
+  for(const rec of records){
+   const existing=byCid.get(rec.cid),sameName=byName.get(rec.unit);
+   if(sameName && !existing && sameName.cid && sameName.cid.toLowerCase()!==rec.cid.toLowerCase())
+      throw Error('CID divergente para '+rec.unit+'; revise o cadastro antes de importar');
+   if(existing && existing.name!==rec.unit)throw Error('CID ja cadastrado sob outro nome: '+existing.name);
+   let id;
+   if(existing)id=existing.id;
+   else if(sameName){id=sameName.id;
+    if(!sameName.cid)db.prepare('UPDATE companies SET cid=? WHERE id=?').run(rec.cid,id);
+   }else{id=Number(addCompany.run(rec.unit,rec.city,rec.lat,rec.lon,rec.cid,rec.mapsUrl).lastInsertRowid);companiesAdded++;}
+   for(const term of rec.terms){termsAdded+=Number(addTerm.run(id,term.term,term.cluster,term.priority).changes);}
+  }
+  db.exec('COMMIT');return {companiesAdded,termsAdded};
+ }catch(e){db.exec('ROLLBACK');throw e;}
+}
+
+### FIM DO ARQUIVO: src/db.js
+
+==================================================
+### INICIO DO ARQUIVO: src/services/measurement.js
+==================================================
+import fs from 'node:fs';
+import path from 'node:path';
+import { getCompany, getRun } from '../db.js';
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const normalize=str=>String(str??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const safe=str=>String(str).replace(/[^a-z0-9_\-]/gi,'_').slice(0,60);
+
+export function isDirectCidMatch(company,result){
+  const cid=String(company.cid||'').toLowerCase().replace(/^0x/,'');
+  if(!cid || !/^[0-9a-f]{8,20}$/.test(cid))return false;
+  const link=String(result.url||'').toLowerCase();
+  // Target feature ID must be present as full 0x-encoded field, not a substring of a name.
+  return link.includes(':0x'+cid) || new RegExp(`(?:[?&]cid=)${BigInt('0x'+cid).toString()}(?:&|$)`).test(link);
+}
+export function findCandidate(company,results){
+  const cidIndex=results.findIndex(x=>isDirectCidMatch(company,x));
+  if(cidIndex>=0)return {confidence:'CID', position:cidIndex+1, matched:results[cidIndex]};
+  const full=normalize(company.name);
+  const short=normalize(company.name.split(/[—|]/)[0]);
+  const aliases=[...new Set([full,short])].filter(x=>x.length>=5);
+  const matched=results.map((r,i)=>({r,i})).filter(({r})=>{
+    const name=normalize(r.name),raw=normalize(r.detail);
+    const aliasMatch=aliases.some(a=>name.includes(a));
+    const outletWanted=full.includes('outlet');
+    return aliasMatch && (outletWanted || !name.includes('outlet')) &&
+      (raw.includes(normalize(company.city)) || name.includes(normalize(company.city)));
+  });
+  // Ambiguous name matches are never promoted to verified ranking automatically.
+  if(matched.length===1)return {confidence:'NAME_ONLY',position:matched[0].i+1,matched:matched[0].r};
+  return {confidence:'NONE',position:null,matched:null};
+}
+export function evaluateObserved(company,results,feedLoaded){
+  if(!feedLoaded)return {status:'NO_LIST',position:null,candidatePosition:null,confidence:'NONE'};
+  const organic=results.filter(x=>!x.promoted);
+  const candidate=findCandidate(company,organic);
+  if(candidate.confidence==='CID')return {status:'VERIFIED',position:candidate.position,candidatePosition:null,confidence:'CID'};
+  if(candidate.confidence==='NAME_ONLY')return {status:'REVIEW',position:null,candidatePosition:candidate.position,confidence:'NAME_ONLY'};
+  return {status:organic.length>=20?'NOT_FOUND':'REVIEW',position:null,candidatePosition:null,confidence:'NONE'};
+}
+
+async function readCards(page){
+  return page.evaluate(()=>{
+    const feed=document.querySelector('[role="feed"]');
+    if(!feed)return {hasFeed:false,items:[]};
+    const nodes=[...feed.querySelectorAll('a.hfpxzc, a[aria-label][href*="/maps/place/"]')];
+    const unique=new Map();
+    for(const anchor of nodes){
+      const container=anchor.closest('div.Nv2PK')||anchor.closest('div[role="article"]')||anchor.parentElement?.parentElement?.parentElement;
+      const name=(anchor.getAttribute('aria-label')||container?.querySelector('.qBF1Pd')?.textContent||'').trim();
+      const url=anchor.href||'';
+      if(!name||!url||unique.has(url))continue;
+      const detail=(container?.innerText||'').slice(0,700);
+      const promoted=/(^|\n)\s*(patrocinado|anúncio|anuncio|sponsored|ad)\s*(\n|$)/i.test(detail);
+      unique.set(url,{name,url,detail,promoted});
+    }
+    return {hasFeed:true,items:[...unique.values()]};
+  });
+}
+
+export function makeQueue({db,outputDir,emit=()=>{}}){
+  let running=false;
+  const queue=[];
+  const queued=new Set();
+  async function drain(){
+    if(running)return;
+    running=true;
+    while(queue.length){const id=queue.shift();queued.delete(id);try{await execute(id)}catch(e){db.prepare("UPDATE runs SET status='FAILED', ended_at=?, message=? WHERE id=?").run(new Date().toISOString(),String(e.message||e).slice(0,450),id);emit('error',id,e);}}
+    running=false;
+  }
+  function enqueue(id){if(!queued.has(id)){queue.push(id);queued.add(id);void drain();}}
+  async function execute(runId){
+    const run=getRun(db,runId),company=getCompany(db,run.company_id);
+    if(!company)throw Error('Empresa não encontrada');
+    const ms=db.prepare(`SELECT m.id, m.term_id, t.query FROM measurements m JOIN terms t ON t.id=m.term_id WHERE m.run_id=? AND m.status='PENDING' ORDER BY m.id`).all(runId);
+    db.prepare("UPDATE runs SET status='RUNNING', started_at=?,message='' WHERE id=?").run(new Date().toISOString(),runId);
+    let context;
+    const dir=path.join(outputDir,'run-'+runId);fs.mkdirSync(dir,{recursive:true});
+    try{
+      const {chromium}=await import('playwright');
+      // Headed Chrome; deliberate low-frequency user-triggered measurements.
+      // No fingerprint spoofing, CAPTCHA bypass, proxy rotation or parallel crawling.
+      context=await chromium.launchPersistentContext(path.join(outputDir,'browser-profile'),{
+        channel:'chrome',headless:false,viewport:{width:1380,height:950},locale:'pt-BR',timezoneId:'America/Sao_Paulo'
+      });
+      await context.grantPermissions(['geolocation'],{origin:'https://www.google.com'});
+      await context.setGeolocation({latitude:company.latitude,longitude:company.longitude,accuracy:150});
+      const page=context.pages()[0]||await context.newPage();
+      let stopped=false;
+      for(const m of ms){
+        let status='ERROR',position=null,candidatePosition=null,confidence='NONE',observed=[],screenshot='',url='';
+        let reason='';
+        try {
+          url=`https://www.google.com/maps/search/${encodeURIComponent(m.query)}/@${company.latitude},${company.longitude},15z?hl=pt-BR`;
+          await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+          await sleep(2500);
+          const accept=page.getByRole('button',{name:/aceitar tudo|accept all/i}).first();
+          if(await accept.isVisible().catch(()=>false))await accept.click({timeout:1500}).catch(()=>{});
+          const body=(await page.locator('body').innerText({timeout:5000}).catch(()=>''));
+          if(/tráfego incomum|unusual traffic|captcha|não sou um robô|verify you are human/i.test(body.slice(0,2500))){
+            status='BLOCKED';reason='Google solicitou verificação humana; execução interrompida';stopped=true;
+          }else{
+            await page.locator('[role="feed"]').waitFor({timeout:11000}).catch(()=>{});
+            const initial=await readCards(page);
+            if(!initial.hasFeed){status='NO_LIST';reason='Sem lista comparável de resultados';}
+            else {
+              const seen=new Map();
+              for(let scroll=0;scroll<9;scroll++){
+                const snap=await readCards(page);
+                for(const card of snap.items) if(!seen.has(card.url))seen.set(card.url,card);
+                if(seen.size>=25)break;
+                await page.locator('[role="feed"]').evaluate(el=>el.scrollBy(0,950)).catch(()=>{});
+                await sleep(800);
+              }
+              observed=[...seen.values()];
+              const decision=evaluateObserved(company,observed,true);
+              status=decision.status;position=decision.position;candidatePosition=decision.candidatePosition;confidence=decision.confidence;
+              if(!observed.length)reason='Não foi possível ler cartões de resultado';
+            }
+          }
+          screenshot=`run-${runId}/${safe(m.id+'_'+m.query)}.png`;
+          await page.screenshot({path:path.join(outputDir,screenshot),timeout:15000}).catch(()=>{screenshot='';});
+        }catch(e){reason=String(e.message||e).slice(0,250);}
+        db.prepare(`UPDATE measurements SET status=?,position=?,candidate_position=?,confidence=?,screenshot=?,search_url=?,results_json=?,observed_count=?,measured_at=?,review_note=? WHERE id=?`)
+          .run(status,position,candidatePosition,confidence,screenshot,url,JSON.stringify(observed),observed.filter(x=>!x.promoted).length,new Date().toISOString(),reason,m.id);
+        db.prepare('UPDATE runs SET completed=completed+1,message=? WHERE id=?').run(`${m.query}: ${status}`,runId);
+        emit('progress',runId,{query:m.query,status});
+        if(stopped)break;
+        await sleep(4500);
+      }
+      db.prepare("UPDATE runs SET status=?,ended_at=?,message=? WHERE id=?").run(stopped?'BLOCKED':'COMPLETE',new Date().toISOString(),stopped?'Verificação humana detectada: execução interrompida':'Coleta finalizada; revise resultados pendentes.',runId);
+    } finally {if(context)await context.close().catch(()=>{});}
+  }
+  function recover(){const rows=db.prepare("SELECT id FROM runs WHERE status IN ('QUEUED','RUNNING') ORDER BY id").all();for(const row of rows){db.prepare("UPDATE runs SET status='QUEUED',message='Execução recuperada após reinício' WHERE id=?").run(row.id);enqueue(row.id);}}
+  return {enqueue,recover,get running(){return running},get pending(){return queue.length}};
+}
+
+### FIM DO ARQUIVO: src/services/measurement.js
+
+==================================================
+### INICIO DO ARQUIVO: src/services/import.js
+==================================================
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {evaluateObserved} from './measurement.js';
+
+export function parseCsv(text){
+  const rows=[];let row=[],value='',quoted=false;
+  const input=String(text).replace(/^\uFEFF/,'');
+  for(let i=0;i<input.length;i++){
+    const ch=input[i];
+    if(quoted){if(ch==='"' && input[i+1]==='"'){value+='"';i++;}else if(ch==='"')quoted=false;else value+=ch;}
+    else if(ch==='"')quoted=true;
+    else if(ch===';'){row.push(value);value='';}
+    else if(ch==='\r'||ch==='\n'){
+      if(ch==='\r'&&input[i+1]==='\n')i++;
+      row.push(value);value='';if(row.some(c=>c!==''))rows.push(row);row=[];
+    }else value+=ch;
+  }
+  if(quoted)throw Error('CSV com aspas nao terminadas');
+  if(value!==''||row.length){row.push(value);rows.push(row);}
+  if(rows.length<2)throw Error('CSV vazio ou sem cabecalho');
+  const headers=rows.shift();
+  return rows.map((r,index)=>{
+    if(r.length!==headers.length)throw Error(`CSV linha ${index+2}: numero de colunas invalido`);
+    return Object.fromEntries(headers.map((h,i)=>[h,r[i]]));
+  });
+}
+const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
+function command(bin,args){return execFileSync(bin,args,{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:90_000,maxBuffer:10*1024*1024});}
+function openInput(src){
+  const p=path.resolve(src);
+  if(!fs.existsSync(p))throw Error('Pasta ou arquivo nao encontrado: '+p);
+  if(fs.statSync(p).isDirectory())return {root:p,cleanup:()=>{}};
+  if(!p.toLowerCase().endsWith('.zip'))throw Error('Use um arquivo .zip ou a pasta extraida');
+  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'nexus-import-'));
+  try{
+    let names;
+    let method='tar';
+    try{names=command('tar',['-tf',p]).split(/\r?\n/).filter(Boolean);}catch{
+      method='unzip';names=command('unzip',['-Z1',p]).split(/\r?\n/).filter(Boolean);
+    }
+    if(names.some(name=>/^(?:[\\/]|[a-z]:)/i.test(name)||name.replaceAll('\\','/').split('/').includes('..')))
+      throw Error('O ZIP contem caminhos inseguros');
+    if(names.length>6000)throw Error('O ZIP contem arquivos demais');
+    if(method==='tar')command('tar',['-xf',p,'-C',tmp]);
+    else command('unzip',['-oq',p,'-d',tmp]);
+    return {root:tmp,cleanup:()=>fs.rmSync(tmp,{recursive:true,force:true})};
+  }catch(e){fs.rmSync(tmp,{recursive:true,force:true});throw e;}
+}
+function findReportDir(root){
+  const dirs=[root,path.join(root,'resultado')];
+  return dirs.find(d=>fs.existsSync(path.join(d,'MEDICOES_JARES.csv')));
+}
+function evidencePath(base,relative){
+  if(typeof relative!=='string'||!relative.trim())return null;
+  const normalized=relative.replaceAll('\\','/');
+  const clean=path.normalize(normalized);
+  if(path.isAbsolute(clean)||clean.split(path.sep).includes('..')||/^[a-z]:/i.test(clean))throw Error('Caminho de evidencia inseguro');
+  const absolute=path.resolve(base,clean);
+  if(!absolute.startsWith(base+path.sep))throw Error('Evidencia fora da pasta importada');
+  return absolute;
+}
+function parseBrazilDate(value){
+  const m=/^(\d{2})\/(\d{2})\/(\d{4}),?\s+(\d{2}):(\d{2}):(\d{2})$/.exec(value||'');
+  if(!m)throw Error('Data da medicao invalida: '+value);
+  const [_,day,month,year,hour,min,sec]=m;
+  const d=new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}-03:00`);
+  if(Number.isNaN(d.getTime()))throw Error('Data invalida: '+value);
+  return d.toISOString();
+}
+/** Import data from the external free Jares measurement script. CID corroboration is required
+ * before a row can become VERIFIED, regardless of the reported numerical position. */
+export function importLegacyJares(db,source,outputDir){
+ const input=openInput(source);const written=[];
+ try{
+  const root=findReportDir(input.root);
+  if(!root)throw Error('Nao encontrei MEDICOES_JARES.csv no ZIP ou pasta');
+  const csvBuffer=fs.readFileSync(path.join(root,'MEDICOES_JARES.csv'));
+  const digest=crypto.createHash('sha256').update(csvBuffer).digest('hex');
+  const existing=db.prepare('SELECT 1 FROM imported_batches WHERE digest=?').get(digest);
+  if(existing)return {duplicate:true,imported:0};
+  const rows=parseCsv(csvBuffer.toString('utf8'));
+  if(rows.length>2000)throw Error('Limite de 2000 buscas por importacao');
+  const headers=['Unidade','Cluster','Prioridade','Termo','Posição observada','Status','Data/hora','Busca Maps','Print'];
+  if(!rows.every(r=>headers.every(h=>typeof r[h]==='string')))throw Error('O arquivo CSV nao tem o formato esperado');
+  const companies=db.prepare('SELECT * FROM companies').all();
+  const lookups=new Map(companies.map(c=>[normalize(c.name),c]));
+  const groups=new Map();
+  for(const r of rows){const key=normalize(r.Unidade);if(!lookups.has(key))throw Error('Empresa nao cadastrada: '+r.Unidade);
+    if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r);
+  }
+  const stamp=new Date().toISOString(),summary=[];
+  db.exec('BEGIN');
+  try{
+   for(const [key,items] of groups){
+    const company=lookups.get(key),terms=db.prepare('SELECT * FROM terms WHERE company_id=?').all(company.id);
+    const termMap=new Map(terms.map(t=>[normalize(t.query),t]));
+    const run=Number(db.prepare("INSERT INTO runs(company_id,mode,status,total,completed,created_at,started_at,ended_at,message,source) VALUES(?,'all','COMPLETE',?,?,?,?,?,?,'IMPORT')").run(company.id,items.length,items.length,stamp,stamp,stamp,'Auditoria importada; posicoes validadas por CID onde possivel').lastInsertRowid);
+    const dir=path.join(outputDir,`run-${run}`);fs.mkdirSync(dir,{recursive:true});
+    let verified=0,review=0;
+    for(const row of items){
+     const term=termMap.get(normalize(row.Termo));if(!term)throw Error(`Termo nao cadastrado para ${company.name}: ${row.Termo}`);
+     if(normalize(term.cluster)!==normalize(row.Cluster))throw Error('Cluster divergente: '+row.Termo);
+     const value=row['Posição observada'].trim();const observed=value?Number(value):null;
+     if(value && (!Number.isInteger(observed)||observed<1||observed>500))throw Error('Posicao invalida: '+row.Termo);
+     const date=parseBrazilDate(row['Data/hora']);
+     const url=row['Busca Maps'];if(url && !/^https:\/\/www\.google\.com\/maps\//i.test(url))throw Error('Busca Maps invalida');
+     const png=evidencePath(root,row.Print),jsonPath=png?png.replace(/\.png$/i,'_lista.json'):null;
+     const results=jsonPath&&fs.existsSync(jsonPath)?JSON.parse(fs.readFileSync(jsonPath,'utf8')):[];
+     if(!Array.isArray(results)||results.length>300)throw Error('Lista de resultados invalida');
+     const check=evaluateObserved(company,results,results.length>0);
+     let status='NO_LIST',position=null,candidate=null,confidence='NONE',note='Importado sem lista de resultados comparavel';
+     if(observed!==null){
+       if(check.status==='VERIFIED' && check.position===observed){status='VERIFIED';position=observed;confidence='CID';note='Posicao importada e conferida com CID da ficha nos resultados organicos';verified++;}
+       else{status='REVIEW';candidate=observed;confidence='CSV_ONLY';note='Posicao observada no CSV ainda nao validada por CID; revisar antes de publicar';review++;}
+     } else if(/30 primeiros/i.test(row.Status||'')){status='NOT_FOUND';note='Nao localizada no conjunto limitado de resultados observados';}
+     else if(/sem lista/i.test(row.Status||'')){status='NO_LIST';note='A consulta nao retornou lista comparavel';}
+     else {status='REVIEW';note='Busca inconclusiva; sem posicao numerica para confirmar';review++;}
+     let screenshot='';
+     if(png && fs.existsSync(png)){
+       if(fs.statSync(png).size>8*1024*1024)throw Error('Print maior que 8MB');
+       const safeName=`${term.id}_${path.basename(png).replace(/[^a-zA-Z0-9_.-]/g,'_')}`;
+       const target=path.join(dir,safeName);fs.copyFileSync(png,target);written.push(target);screenshot=`run-${run}/${safeName}`;
+     }
+     db.prepare(`INSERT INTO measurements(run_id,term_id,status,position,candidate_position,confidence,screenshot,search_url,results_json,observed_count,measured_at,review_note)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(run,term.id,status,position,candidate,confidence,screenshot,url,JSON.stringify(results),results.filter(x=>!x.promoted).length,date,note);
+    }
+    summary.push({company:company.name,runId:run,total:items.length,verified,review});
+   }
+   db.prepare('INSERT INTO imported_batches(digest,created_at,source_name) VALUES(?,?,?)').run(digest,stamp,path.basename(source).slice(0,200));
+   db.exec('COMMIT');
+  }catch(e){db.exec('ROLLBACK');for(const f of written)try{fs.rmSync(f,{force:true});}catch{}throw e;}
+  return {duplicate:false,imported:rows.length,companies:summary};
+ }finally{input.cleanup();}
+}
+
+### FIM DO ARQUIVO: src/services/import.js
+
+==================================================
+### INICIO DO ARQUIVO: src/services/keywords.js
+==================================================
+const norm=s=>String(s||'').trim().replace(/\s+/g,' ');
+const categories={
+ moveis:{title:'Lojas de móveis',clusters:{'Loja de móveis':['loja de móveis','móveis','comprar móveis','loja de mobiliário'],'Sofás e estofados':['loja de sofás','sofás','comprar sofá'],'Quartos':['camas','guarda-roupa','móveis para quarto'],'Salas':['móveis para sala','mesa de jantar','rack para sala']}},
+ restaurante:{title:'Restaurantes',clusters:{'Restaurante':['restaurante','onde almoçar','almoço','restaurante para jantar'],'Comidas':['comida caseira','prato feito','restaurante para família']}},
+ hotel:{title:'Hospedagem',clusters:{'Hospedagem':['hospedagem','onde se hospedar'],'Hotel':['hotel','hotel para casal'],'Pousada':['pousada','pousada romântica']}},
+ imobiliaria:{title:'Imobiliárias',clusters:{'Imobiliária':['imobiliária','corretor de imóveis'],'Venda':['imóveis à venda','casas à venda','apartamentos à venda'],'Locação':['imóveis para alugar','casas para alugar','apartamentos para alugar']}},
+ construcao:{title:'Materiais para construção',clusters:{'Construção':['materiais de construção','loja de materiais de construção'],'Hidráulica':['material hidráulico','loja de materiais hidráulicos'],'Elétrica':['material elétrico','loja de material elétrico']}},
+ automotivo:{title:'Auto e moto',clusters:{'Peças':['loja de autopeças','loja de peças'],'Serviços':['oficina mecânica','revisão de veículos'],'Acessórios':['acessórios automotivos','loja de acessórios']}},
+ generico:{title:'Produtos/serviços personalizados',clusters:{'Categoria principal':['loja','comprar produtos','comércio local']}}
+};
+export function suggestKeywords({city,niche,products=[]}){
+ const base=categories[niche]||categories.generico;
+ const location=norm(city).replace(/,\s*(MG|SP|RJ|ES|BA|PR|SC|RS|GO|DF|RO|AC|AM|RR|PA|TO|AP|MA|PI|CE|RN|PB|PE|AL|SE|MT|MS)\b/i,'');
+ if(!location)return [];
+ const terms=[];
+ for(const [cluster,phrases] of Object.entries(base.clusters)){
+  phrases.forEach((phrase,i)=>terms.push({query:`${phrase} em ${location}`,cluster,priority:i<2?'P1':'P2'}));
+ }
+ for(const product of products){
+  const name=norm(product).slice(0,90);
+  if(!name)continue;
+  terms.push({query:`${name} em ${location}`,cluster:'Produtos e serviços informados',priority:'P1'});
+  terms.push({query:`comprar ${name} em ${location}`,cluster:'Produtos e serviços informados',priority:'P2'});
+ }
+ const existing=new Set();
+ return terms.filter(x=>{const k=x.query.toLowerCase();if(existing.has(k))return false;existing.add(k);return true;}).slice(0,100);
+}
+export function listNiches(){return Object.entries(categories).map(([value,o])=>({value,title:o.title}));}
+
+### FIM DO ARQUIVO: src/services/keywords.js
+
+==================================================
+### INICIO DO ARQUIVO: src/services/report.js
+==================================================
+import { getCompany, getMeasurements, getLatestRun } from '../db.js';
+const order = ['VERIFIED','REVIEW','NOT_FOUND','NO_LIST','BLOCKED','ERROR','PENDING'];
+export function buildReport(db, companyId) {
+  const company=getCompany(db,companyId);
+  if(!company) return null;
+  const run=getLatestRun(db,companyId);
+  const rows=run?getMeasurements(db,run.id):[];
+  const verified=rows.filter(r=>r.status==='VERIFIED' && Number.isInteger(r.position));
+  const review=rows.filter(r=>r.status==='REVIEW');
+  const group=n=>verified.filter(r=>r.position===n).map(r=>r.query);
+  const top5=verified.filter(r=>r.position<=5).length;
+  const top3=verified.filter(r=>r.position<=3).length;
+  const clusters=[...new Set(rows.map(r=>r.cluster))];
+  const parts=[`📊 *NEXUS | FEEDBACK DE MEDIÇÃO — ${company.name.toUpperCase()}*`,
+    'Bom dia, pessoal! Tudo bem? 😊',
+    'Compartilhamos o acompanhamento das pesquisas comerciais da empresa no Google Maps, considerando a localização de referência utilizada na auditoria.'];
+  if (!run) parts.push('📌 *Ainda não existe uma medição concluída para esta ficha.*');
+  else {
+    const section=(pos,emoji,label)=>{const arr=group(pos);if(arr.length)parts.push(`${emoji} *${label}*\n${arr.map(t=>`${emoji} ${t}`).join('\n')}`);};
+    section(1,'🥇','PRIMEIROS LUGARES CONFIRMADOS');
+    section(2,'🥈','SEGUNDOS LUGARES CONFIRMADOS');
+    section(3,'🥉','TERCEIROS LUGARES CONFIRMADOS');
+    const fourFive=verified.filter(r=>r.position===4||r.position===5);
+    if(fourFive.length)parts.push(`📈 *POSIÇÕES 4 E 5*\n${fourFive.map(r=>`• ${r.query} — ${r.position}º`).join('\n')}`);
+    parts.push(`📊 *RESUMO DA AUDITORIA*\n• ${rows.length} pesquisas incluídas\n• ${verified.length} posições verificadas\n• ${top3} termos no Top 3\n• ${top5} termos no Top 5\n• ${review.length} resultados aguardando revisão`);
+    if(review.length)parts.push('🔍 *EM CONFERÊNCIA*\nHá resultados potencialmente relacionados à empresa que ainda exigem validação da ficha e da posição antes de qualquer anúncio.');
+    if(!verified.length)parts.push('Até esta coleta, não foi possível comprovar posições orgânicas com segurança. Seguimos em conferência; isso não significa ausência da empresa nas buscas.');
+    if(clusters.length)parts.push(`🎯 *CLUSTERS MONITORADOS*\n${clusters.map((x,i)=>`${i+1}. ${x}`).join('\n')}`);
+  }
+  parts.push('As posições correspondem ao momento e à localização da coleta e podem variar conforme o dispositivo, o horário e o histórico de busca. Seguimos trabalhando para ampliar a presença da empresa nas pesquisas mais relevantes. 🚀🤝');
+  return {company, run, measurements:rows, verifiedCount:verified.length, reviewCount:review.length, text:parts.join('\n\n')};
+}
+export function csv(rows){
+  const escape=value=>{
+    let str=String(value??'');
+    // CSV formula injection prevention for Excel/Sheets.
+    if(/^[\s]*[=+@\-]/.test(str))str="'"+str;
+    return '"'+str.replaceAll('"','""')+'"';
+  };
+  const header=['Termo','Cluster','Prioridade','Posição confirmada','Posição candidata','Status','Data da medição','URL de pesquisa','Print','Quantidade observada','Nota de revisão'];
+  const lines=rows.map(r=>[r.query,r.cluster,r.priority,r.position??'',r.candidate_position??'',r.status,r.measured_at??'',r.search_url,r.screenshot,r.observed_count,r.review_note]);
+  return '\ufeff'+[header,...lines].map(a=>a.map(escape).join(';')).join('\r\n');
+}
+export function statusSort(a,b){return order.indexOf(a.status)-order.indexOf(b.status);}
+
+### FIM DO ARQUIVO: src/services/report.js
+
+==================================================
+### INICIO DO ARQUIVO: scripts/import-result.js
+==================================================
+import path from 'node:path';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {createDb,insertSeed,insertAdditionalSeed} from '../src/db.js';
+import {importLegacyJares} from '../src/services/import.js';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const input=process.argv[2]||path.join(root,'resultado.zip');
+const data=process.env.NEXUS_DATA_DIR?path.resolve(process.env.NEXUS_DATA_DIR):path.join(root,'local-data');
+fs.mkdirSync(path.join(data,'evidence'),{recursive:true});
+const db=createDb(path.join(data,'nexus.sqlite'));
+try {
+ const seed=JSON.parse(fs.readFileSync(path.join(root,'data/jares-seed.json'),'utf8'));
+ insertSeed(db,seed);
+ const extra=JSON.parse(fs.readFileSync(path.join(root,'data/jares-2-unidades.json'),'utf8'));
+ insertAdditionalSeed(db,extra);
+ const result=importLegacyJares(db,input,path.join(data,'evidence'));
+ console.log('\nNEXUS — IMPORTACAO DE MEDICOES\n');
+ if(result.duplicate)console.log('Este arquivo ja foi importado. Nenhuma medicao duplicada.');
+ else{
+  for(const c of result.companies)console.log(`${c.company}: ${c.total} termos | ${c.verified} confirmados por CID | ${c.review} para revisar | execucao #${c.runId}`);
+  console.log(`\n${result.imported} registros importados. Abra o sistema normalmente para consultar os rankings.`);
+ }
+}catch(e){console.error('FALHA NA IMPORTACAO:',e.message);process.exitCode=1;
+}finally{db.close();}
+
+### FIM DO ARQUIVO: scripts/import-result.js
+
+==================================================
+### INICIO DO ARQUIVO: data/jares-seed.json
+==================================================
+[
+  {
+    "unit": "Jares Móveis — Pouso Alegre",
+    "city": "Pouso Alegre",
+    "lat": -22.23,
+    "lon": -45.933,
+    "namePattern": "jares moveis",
+    "cid": "d16aefdbdee3d709",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Fátima Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis avenida Prefeito Tuany Toledo"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "móveis residenciais Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "comprar sofá em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá reclinável Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "loja de estofados em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "loja de colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "cama box Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "comprar colchão em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Jantar e sala",
+        "term": "mesa de jantar em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "loja de mesas de jantar Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "poltronas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "aparador para sala Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "móveis para escritório em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "escrivaninha em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "guarda roupa em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "camas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Fátima Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Tuany Toledo Pouso Alegre"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Móveis — Três Corações",
+    "city": "Três Corações",
+    "lat": -21.7,
+    "lon": -45.256,
+    "namePattern": "jares moveis",
+    "cid": "a66a135255d2a620",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "móveis em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Jardim Umuarama Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis avenida Rei Pelé Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "móveis residenciais em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "comprar sofá em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "estofados Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Jantar e sala",
+        "term": "mesa de jantar em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "loja de mesa de jantar Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "cadeiras de jantar Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "rack para sala Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "poltronas em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "aparador para sala Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Quarto e dormitórios",
+        "term": "camas em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "guarda roupa em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "loja de móveis para quarto Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "cabeceira de cama Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Decoração e escritório",
+        "term": "loja de decoração em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis para escritório Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis de qualidade Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis para sala em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis avenida Rei Pelé"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Jardim Umuarama"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Outlet — Pouso Alegre",
+    "city": "Pouso Alegre",
+    "lat": -22.23,
+    "lon": -45.933,
+    "namePattern": "jares outlet",
+    "cid": "dfd82871c56fa6c5",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "outlet de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "loja outlet de móveis Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "móveis outlet Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "comprar móveis em outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet e intenção",
+        "term": "outlet de móveis Jardim Santa Eliza Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet e intenção",
+        "term": "loja de móveis Rua Comendador José Garcia Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá reclinável Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofás de outlet em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá com bom preço Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "loja de colchões Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchões no outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "cama box em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchão casal Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis residenciais",
+        "term": "loja de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para sala Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para quarto Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "poltronas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para casa Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis com desconto em Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis em promoção Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis ponta de estoque Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "sofá em promoção Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Sleep Center Outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Outlet Santa Eliza Pouso Alegre"
+      }
+    ]
+  }
+]
+### FIM DO ARQUIVO: data/jares-seed.json
+
+==================================================
+### INICIO DO ARQUIVO: data/jares-2-unidades.json
+==================================================
+[
+  {
+    "unit": "Jares Móveis Lavras",
+    "city": "Lavras",
+    "lat": -21.2438,
+    "lon": -44.9883,
+    "cid": "494c784ebd090660",
+    "mapsUrl": "https://www.google.com/maps/place/Jares+M%C3%B3veis+-+Loja+de+M%C3%B3veis+em+Lavras/data=!4m2!3m1!1s0x0:0x494c784ebd090660?hl=pt-BR",
+    "address": "R. Otacílio Negrão de Lima, 324, Centro, Lavras, MG",
+    "namePattern": "jares moveis",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "guarda roupa em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "guarda roupa Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "cômodas em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "cômodas Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "camas em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "camas Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "móveis para dormitório em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "móveis para dormitório Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "mesa de jantar em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "mesa de jantar Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "cadeiras para sala de jantar em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "cadeiras para sala de jantar Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "conjunto de mesa com cadeiras em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "conjunto de mesa com cadeiras Lavras MG"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Móveis Varginha",
+    "city": "Varginha",
+    "lat": -21.5556,
+    "lon": -45.4364,
+    "cid": "8b8401f5f5276586",
+    "mapsUrl": "https://www.google.com/maps/place/Jares+M%C3%B3veis+-+Loja+de+M%C3%B3veis+em+Varginha/data=!4m2!3m1!1s0x94ca9291aeee0b23:0x8b8401f5f5276586?hl=pt-BR",
+    "address": "Av. Major Venâncio, 451, Centro, Varginha, MG",
+    "namePattern": "jares moveis",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "outlet de móveis em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "outlet de móveis Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis de outlet em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis de outlet Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis com desconto em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis com desconto Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis ponta de estoque em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis ponta de estoque Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "guarda roupa em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "guarda roupa Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "camas em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "camas Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "móveis para dormitório em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "móveis para dormitório Varginha MG"
+      }
+    ]
+  }
+]
+### FIM DO ARQUIVO: data/jares-2-unidades.json
+
+==================================================
+### INICIO DO ARQUIVO: tests/measurement.test.js
+==================================================
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluateObserved,findCandidate} from '../src/services/measurement.js';
+import {createDb,insertSeed} from '../src/db.js';
+import {buildReport,csv} from '../src/services/report.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+const company={name:'Jares Móveis — Pouso Alegre',city:'Pouso Alegre',cid:'d16aefdbdee3d709'};
+test('CID match positions exclude sponsored placements',()=>{
+ const result=evaluateObserved(company,[{name:'Ad',url:'https://a.com',promoted:true},{name:'Concorrente',url:'https://c.com',promoted:false},{name:'Jares Móveis',url:'https://google.com/maps/place/X/data=!4m2!3m1!1s0x0:0xd16aefdbdee3d709',promoted:false}],true);
+ assert.equal(result.position,2);assert.equal(result.status,'VERIFIED');
+});
+test('name-only match is review, never verified',()=>{
+ const result=evaluateObserved(company,[{name:'Jares Móveis',detail:'Pouso Alegre',url:'https://google.com/maps/place/jares',promoted:false}],true);
+ assert.equal(result.status,'REVIEW');assert.equal(result.position,null);assert.equal(result.candidatePosition,1);
+});
+test('direct profile without list is not top one',()=>{
+ assert.equal(evaluateObserved(company,[],false).status,'NO_LIST');
+});
+test('local SQLite, seed and feedback without rankings',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'nexus-test-'));const db=createDb(path.join(dir,'app.sqlite'));
+ try{
+  insertSeed(db,[{unit:'Empresa Teste',city:'TC',lat:-21.7,lon:-45.2,cid:'',terms:[{term:'loja de móveis em TC',cluster:'Loja',priority:'P1'}]}]);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM terms').get().n,1);
+  assert.match(buildReport(db,1).text,/Ainda não existe uma medição/);
+ }finally{db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('CSV sanitizes spreadsheet formulas',()=>{
+ const s=csv([{query:'=HYPERLINK("bad")',cluster:'=1+1',priority:'P1',status:'PENDING'}]);assert.match(s,/"'=HYPERLINK/);
+});
+test('keyword generator does not create ranking positions',async()=>{
+ const {suggestKeywords}=await import('../src/services/keywords.js');
+ const terms=suggestKeywords({city:'Três Corações, MG',niche:'moveis',products:['sofá retrátil']});
+ assert.ok(terms.length>8);assert.ok(terms.some(x=>x.query==='sofá retrátil em Três Corações'));
+ assert.ok(terms.every(x=>!Object.hasOwn(x,'position')));
+});
+test('generic non-Jares company produces candidate for human review',()=>{
+ const result=evaluateObserved({name:'Diamante Produtos de Limpeza',city:'Três Corações',cid:''},[{name:'Diamante Produtos de Limpeza',detail:'Três Corações',url:'https://google.com/maps/place/diamante',promoted:false}],true);
+ assert.equal(result.status,'REVIEW');assert.equal(result.candidatePosition,1);
+});
+
+### FIM DO ARQUIVO: tests/measurement.test.js
+
+==================================================
+### INICIO DO ARQUIVO: tests/import.test.js
+==================================================
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import {createDb,insertSeed} from '../src/db.js';
+import {importLegacyJares,parseCsv} from '../src/services/import.js';
+import {buildReport} from '../src/services/report.js';
+
+test('CSV parser supports quotes, embedded newlines and semicolons',()=>{
+ const csv='"Unidade";"Termo"\r\n"Jares";"sofa; com \""frase\""\nextra"\r\n';
+ assert.deepEqual(parseCsv(csv),[{Unidade:'Jares',Termo:'sofa; com "frase"\nextra'}]);
+});
+
+test('imported CSV requires CID verification and prevents duplicates',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'nexus-csv-import-'));
+ const db=createDb(path.join(dir,'app.sqlite'));
+ try {
+  const fixture=path.join(dir,'resultado'),prints=path.join(fixture,'prints'),out=path.join(dir,'evidence');
+  fs.mkdirSync(prints,{recursive:true});fs.mkdirSync(out,{recursive:true});
+  const name='Jares Móveis — Pouso Alegre',cid='d16aefdbdee3d709';
+  insertSeed(db,[{unit:name,city:'Pouso Alegre',lat:-22.23,lon:-45.933,cid,terms:[
+    {term:'loja de móveis em Pouso Alegre',cluster:'Loja de móveis',priority:'P1'},
+    {term:'comprar móveis em Pouso Alegre',cluster:'Loja de móveis',priority:'P1'}]}]);
+  const rows=[['loja de móveis em Pouso Alegre',2,'v1'],['comprar móveis em Pouso Alegre',1,'v2']];
+  for(const [term,rank,prefix] of rows){
+   fs.writeFileSync(path.join(prints,prefix+'.png'),Buffer.from([137,80,78,71,13,10,26,10]));
+   const hit={name:'Jares Móveis',url:`https://google.com/maps/place/Teste/data=!4m2!3m1!1s0x0:0x${prefix==='v1'?cid:'deadbeef12345678'}`,promoted:false};
+   fs.writeFileSync(path.join(prints,prefix+'_lista.json'),JSON.stringify(prefix==='v1'?[{name:'Outro',url:'https://google.com/maps/place/outro',promoted:false},hit]:[hit]));
+  }
+  const columns=['Unidade','Cidade','Cluster','Prioridade','Termo','Posição observada','Status','Data/hora','Local de referência','Resultados orgânicos capturados','Busca Maps','Print','Concorrentes até 10'];
+  const record=(term,rank,id)=>[name,'Pouso Alegre','Loja de móveis','P1',term,String(rank),'Posição observada','30/10/2026, 11:12:56','-22.23,-45.933','2','https://www.google.com/maps/search/teste',`prints\\${id}.png`,''] .map(v=>'"'+v.replaceAll('"','""')+'"').join(';');
+  fs.writeFileSync(path.join(fixture,'MEDICOES_JARES.csv'),columns.map(v=>'"'+v+'"').join(';')+'\n'+record(rows[0][0],2,'v1')+'\n'+record(rows[1][0],1,'v2')+'\n');
+  const first=importLegacyJares(db,fixture,out);
+  assert.equal(first.imported,2);assert.equal(first.companies[0].verified,1);assert.equal(first.companies[0].review,1);
+  assert.equal(importLegacyJares(db,fixture,out).duplicate,true);
+  const measurements=db.prepare('SELECT status,position,candidate_position,confidence,screenshot FROM measurements ORDER BY id').all();
+  assert.deepEqual(measurements.map(r=>r.status),['VERIFIED','REVIEW']);
+  assert.deepEqual(measurements.map(r=>r.position),[2,null]);
+  assert.deepEqual(measurements.map(r=>r.candidate_position),[null,1]);
+  assert.ok(fs.existsSync(path.join(out,measurements[0].screenshot)));
+  const text=buildReport(db,1).text;
+  assert.doesNotMatch(text,/PRIMEIROS LUGARES CONFIRMADOS/);
+  assert.match(text,/SEGUNDOS LUGARES CONFIRMADOS/);
+  assert.match(text,/1 resultados aguardando revisão/);
+ }finally{db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('database migrates previous v1 database without deleting company data',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'nexus-migration-'));
+ let db=createDb(path.join(dir,'legacy.sqlite'));
+ try{
+  db.prepare("INSERT INTO companies(name,city,latitude,longitude) VALUES('Loja A','Cidade',0,0)").run();
+  db.exec('ALTER TABLE runs RENAME TO legacy_runs');
+  db.exec(`CREATE TABLE runs (id INTEGER PRIMARY KEY AUTOINCREMENT, company_id INTEGER NOT NULL REFERENCES companies(id),status TEXT NOT NULL DEFAULT 'QUEUED',mode TEXT NOT NULL DEFAULT 'all',started_at TEXT,ended_at TEXT,created_at TEXT,total INTEGER NOT NULL DEFAULT 0,completed INTEGER NOT NULL DEFAULT 0,message TEXT NOT NULL DEFAULT '')`);
+  db.exec('DROP TABLE legacy_runs');
+  db.close();db=createDb(path.join(dir,'legacy.sqlite'));
+  assert.ok(db.prepare('PRAGMA table_info(runs)').all().some(r=>r.name==='source'));
+  assert.equal(db.prepare('SELECT COUNT(*) as n FROM companies').get().n,1);
+ }finally{db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+### FIM DO ARQUIVO: tests/import.test.js
+
+==================================================
+### INICIO DO ARQUIVO: tests/new-units.test.js
+==================================================
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {createDb,insertSeed,insertAdditionalSeed} from '../src/db.js';
+import {evaluateObserved} from '../src/services/measurement.js';
+const main=JSON.parse(fs.readFileSync(new URL('../data/jares-seed.json',import.meta.url)));
+const extra=JSON.parse(fs.readFileSync(new URL('../data/jares-2-unidades.json',import.meta.url)));
+test('76 termos, 2 lojas e CID distinto por cidade',()=>{
+ assert.deepEqual(extra.map(x=>[x.unit,x.terms.length,new Set(x.terms.map(t=>t.cluster)).size]),[
+  ['Jares Móveis Lavras',38,5],['Jares Móveis Varginha',38,5]
+ ]);
+ assert.equal(new Set(extra.map(x=>x.cid)).size,2);
+ assert.ok(extra.every(x=>x.terms.every(t=>['P1','P2','P3'].includes(t.priority))));
+});
+test('migração incremental mantém 3 antigas e histórico',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'nexus-2-jares-'));
+ const db=createDb(path.join(dir,'t.sqlite'));
+ try {
+  assert.equal(insertSeed(db,main),3);
+  const old=db.prepare('SELECT id FROM companies ORDER BY id LIMIT 1').get().id;
+  db.prepare('INSERT INTO runs(company_id,mode,status,total,completed) VALUES(?,\'all\',\'COMPLETE\',0,0)').run(old);
+  assert.deepEqual(insertAdditionalSeed(db,extra),{companiesAdded:2,termsAdded:76});
+  assert.deepEqual(insertAdditionalSeed(db,extra),{companiesAdded:0,termsAdded:0});
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM companies').get().n,5);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM runs WHERE company_id=?').get(old).n,1);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM terms').get().n,160);
+  const rec=db.prepare('SELECT cid FROM companies WHERE name=?').get('Jares Móveis Varginha');
+  assert.equal(rec.cid,'8b8401f5f5276586');
+ }finally{db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('resultado de Varginha nao vira ranking de Lavras',()=>{
+ const lav=extra[0],varr=extra[1];
+ const r={name:'Jares Móveis - Loja de Móveis em Varginha',url:'https://www.google.com/maps/place/Jares+Moveis/data=!4m2!3m1!1s0x94ca9291aeee0b23:0x8b8401f5f5276586',detail:'Av Major Venancio, 451',promoted:false};
+ const result=evaluateObserved({...lav,name:lav.unit,latitude:lav.lat,longitude:lav.lon},[r],true);
+ assert.equal(result.status,'REVIEW');assert.equal(result.position,null);
+ const valid=evaluateObserved({...varr,name:varr.unit},[r],true);
+ assert.equal(valid.status,'VERIFIED');assert.equal(valid.position,1);
+});
+
+### FIM DO ARQUIVO: tests/new-units.test.js

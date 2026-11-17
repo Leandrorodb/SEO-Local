@@ -1,0 +1,20 @@
+LOCAL RANK TRACKER 4.8 - MEDICAO RIGOROSA
+
+VALIDADO NESTE AMBIENTE:
+- 21 testes do algoritmo de ranking e proteção de resultados legados: APROVADOS.
+- 13 testes do sistema/medidor legado: APROVADOS.
+- 5 testes de identificação de fichas Maps: APROVADOS.
+- 2 testes de autenticação local, em sequência para não disputar a porta 4181: APROVADOS.
+- 70 arquivos TypeScript/TSX analisados sintaticamente: 0 erros de sintaxe.
+- Confirmação CID/nome, dois passes, sequência do topo, anúncios, prints e prova JSON no código.
+- Exportações antigas do Chrome: barradas pelo gate de parser_version no código.
+
+TOTAL: 41 TESTES APROVADOS NAS PARTES EXECUTÁVEIS LOCALMENTE.
+
+NAO VALIDADO NESTE AMBIENTE:
+- Build integrado TypeScript/React/Fastify (dependências npm indisponíveis neste runtime).
+- Medição no Chrome Windows do usuário.
+- Teste de aceitação comparando posições com página real em vários nichos/locais.
+
+IMPORTANTE: Nenhuma medição real foi inventada. O sistema prefere posição nula a posição sem comprovação.
+A coleta experimental do Maps não oferece precisão matematicamente garantida em todos os cenários.

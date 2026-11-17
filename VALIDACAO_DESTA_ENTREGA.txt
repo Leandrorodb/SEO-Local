@@ -1,0 +1,21 @@
+LOCAL RANK TRACKER V4.3 — VALIDACAO NO AMBIENTE DE PREPARACAO
+
+APROVADOS AQUI:
+- 13 testes do medidor legado, CSV, CID e protecoes contra rankings inventados.
+- 2 testes independentes de OIDC local (senha+TOTP e PKCE local automatico).
+- 6 testes da geracao automatica de termos por nicho.
+- 3 testes de contrato do iniciador/preview compilados.
+- 41 arquivos TypeScript/TSX transpilados sem erros sintaticos.
+
+TOTAL: 24 testes nativos aprovados, sem falhas.
+
+NAO EXECUTADOS AQUI:
+- pnpm install, tsc --noEmit, build de Vite/esbuild (registro npm inacessivel).
+- Testes de integracao do SaaS com PostgreSQL.
+- Primeira auditoria real no Google Maps do Windows.
+
+A V4 original foi compilada e passou em 43 testes no PC do usuario, mas
+isso NAO valida automaticamente as alteracoes posteriores da V4.3.
+
+A V4.3 executa pnpm build antes de abrir a interface, parando se falhar.
+A medicao Chrome experimental nao e fonte comercial licenciada.

@@ -1,0 +1,81 @@
+TAP version 13
+# (node:25976) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: CSV parser supports quotes, embedded newlines and semicolons
+ok 1 - CSV parser supports quotes, embedded newlines and semicolons
+  ---
+  duration_ms: 1.1886
+  ...
+# Subtest: imported CSV requires CID verification and prevents duplicates
+ok 2 - imported CSV requires CID verification and prevents duplicates
+  ---
+  duration_ms: 36.2448
+  ...
+# Subtest: database migrates previous v1 database without deleting company data
+ok 3 - database migrates previous v1 database without deleting company data
+  ---
+  duration_ms: 16.9184
+  ...
+# (node:24428) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: CID match positions exclude sponsored placements
+ok 4 - CID match positions exclude sponsored placements
+  ---
+  duration_ms: 0.9051
+  ...
+# Subtest: name-only match is review, never verified
+ok 5 - name-only match is review, never verified
+  ---
+  duration_ms: 0.5597
+  ...
+# Subtest: direct profile without list is not top one
+ok 6 - direct profile without list is not top one
+  ---
+  duration_ms: 0.106
+  ...
+# Subtest: local SQLite, seed and feedback without rankings
+ok 7 - local SQLite, seed and feedback without rankings
+  ---
+  duration_ms: 16.2123
+  ...
+# Subtest: CSV sanitizes spreadsheet formulas
+ok 8 - CSV sanitizes spreadsheet formulas
+  ---
+  duration_ms: 0.3407
+  ...
+# Subtest: keyword generator does not create ranking positions
+ok 9 - keyword generator does not create ranking positions
+  ---
+  duration_ms: 5.4069
+  ...
+# Subtest: generic non-Jares company produces candidate for human review
+ok 10 - generic non-Jares company produces candidate for human review
+  ---
+  duration_ms: 0.2695
+  ...
+# (node:14012) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: 76 termos, 2 lojas e CID distinto por cidade
+ok 11 - 76 termos, 2 lojas e CID distinto por cidade
+  ---
+  duration_ms: 1.1991
+  ...
+# Subtest: migração incremental mantém 3 antigas e histórico
+ok 12 - migração incremental mantém 3 antigas e histórico
+  ---
+  duration_ms: 19.0005
+  ...
+# Subtest: resultado de Varginha nao vira ranking de Lavras
+ok 13 - resultado de Varginha nao vira ranking de Lavras
+  ---
+  duration_ms: 0.6013
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129.1208

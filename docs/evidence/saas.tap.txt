@@ -1,0 +1,140 @@
+TAP version 13
+# Subtest: Maps rejects SSRF targets, credentials, hostname suffixes and ports
+ok 1 - Maps rejects SSRF targets, credentials, hostname suffixes and ports
+  ---
+  duration_ms: 1.1566
+  ...
+# Subtest: GeoGrid stores 25 unique coordinates with correct center
+ok 2 - GeoGrid stores 25 unique coordinates with correct center
+  ---
+  duration_ms: 0.8664
+  ...
+# Subtest: GPT paste preserves spelling, dedupes accents and rejects foreign refs/instructions
+ok 3 - GPT paste preserves spelling, dedupes accents and rejects foreign refs/instructions
+  ---
+  duration_ms: 3.2125
+  ...
+# Subtest: Name-only, inconsistent IDs, duplicates and partial capture never become Top 1
+ok 4 - Name-only, inconsistent IDs, duplicates and partial capture never become Top 1
+  ---
+  duration_ms: 0.9568
+  ...
+# Subtest: History separates surfaces, coordinates, brands and failures
+ok 5 - History separates surfaces, coordinates, brands and failures
+  ---
+  duration_ms: 0.2886
+  ...
+# Subtest: Alerts respect comparable consecutive drops, interruptions and budget thresholds
+ok 6 - Alerts respect comparable consecutive drops, interruptions and budget thresholds
+  ---
+  duration_ms: 0.9862
+  ...
+# Subtest: Snapshot hash survives JSONB key reordering
+ok 7 - Snapshot hash survives JSONB key reordering
+  ---
+  duration_ms: 7.7201
+  ...
+# Subtest: P0: JWT required, MFA administrative, no self-assigned role and revocation live
+ok 8 - P0: JWT required, MFA administrative, no self-assigned role and revocation live
+  ---
+  duration_ms: 5105.2222
+  ...
+# Subtest: P0: tenant and location ACL stop reads, writes, reports, foreign references and spoofed body
+ok 9 - P0: tenant and location ACL stop reads, writes, reports, foreign references and spoofed body
+  ---
+  duration_ms: 102.0444
+  ...
+# Subtest: P0: suspension blocks reads/export/jobs; legal request survives; reactivation preserves records
+ok 10 - P0: suspension blocks reads/export/jobs; legal request survives; reactivation preserves records
+  ---
+  duration_ms: 35.9683
+  ...
+# Subtest: P0: manual billing duplicate and stale events cannot extend or reactivate license
+ok 11 - P0: manual billing duplicate and stale events cannot extend or reactivate license
+  ---
+  duration_ms: 47.0774
+  ...
+# Subtest: P0/P1: audit -> 25 immutable measurements -> reviewed report -> real PDF, idempotent worker
+ok 12 - P0/P1: audit -> 25 immutable measurements -> reviewed report -> real PDF, idempotent worker
+  ---
+  duration_ms: 378.7289
+  ...
+# Subtest: P0: provider disabled, production demo gate, budget and revoked queued tasks
+ok 13 - P0: provider disabled, production demo gate, budget and revoked queued tasks
+  ---
+  duration_ms: 241.5466
+  ...
+# Subtest: Security: invalid signature, wrong audience, untrusted MFA and expired tokens fail closed
+ok 14 - Security: invalid signature, wrong audience, untrusted MFA and expired tokens fail closed
+  ---
+  duration_ms: 26.9247
+  ...
+# Subtest: Concurrency: query reservation is atomic and parallel workers do not duplicate observations
+ok 15 - Concurrency: query reservation is atomic and parallel workers do not duplicate observations
+  ---
+  duration_ms: 266.3176
+  ...
+# Subtest: Worker: forged task identity and revoked membership cannot buy queries; abandoned leases never retry blindly
+ok 16 - Worker: forged task identity and revoked membership cannot buy queries; abandoned leases never retry blindly
+  ---
+  duration_ms: 321.4297
+  ...
+# Subtest: Saving automation and its initial audit is atomic under retries, disabled provider and budget rejection
+ok 17 - Saving automation and its initial audit is atomic under retries, disabled provider and budget rejection
+  ---
+  duration_ms: 259.169
+  ...
+# Subtest: Scheduler: duplicate delivery produces one run and unsupported provider disables schedule with reason
+ok 18 - Scheduler: duplicate delivery produces one run and unsupported provider disables schedule with reason
+  ---
+  duration_ms: 224.6095
+  ...
+# Subtest: 40 active terms produce a 1000-query preflight with no measurements or paid work
+ok 19 - 40 active terms produce a 1000-query preflight with no measurements or paid work
+  ---
+  duration_ms: 92.9518
+  ...
+# Subtest: Branding is tenant-scoped and rejects non-PNG payloads
+ok 20 - Branding is tenant-scoped and rejects non-PNG payloads
+  ---
+  duration_ms: 50.794
+  ...
+# Subtest: Compiled production HTTP serves the frontend and refuses private files and unauthenticated API calls
+ok 21 - Compiled production HTTP serves the frontend and refuses private files and unauthenticated API calls
+  ---
+  duration_ms: 1179.3562
+  ...
+# Subtest: Opportunities, configurable alerts and dashboard use verified same-unit data
+ok 22 - Opportunities, configurable alerts and dashboard use verified same-unit data
+  ---
+  duration_ms: 400.1234
+  ...
+# Subtest: Networks are isolated even when tenants reuse a brand name
+ok 23 - Networks are isolated even when tenants reuse a brand name
+  ---
+  duration_ms: 50.1096
+  ...
+# Subtest: Worker HTTP requires the correct service identity; redelivery and license expiry are idempotent
+ok 24 - Worker HTTP requires the correct service identity; redelivery and license expiry are idempotent
+  ---
+  duration_ms: 188.0031
+  ...
+# Subtest: Browser E2E: PKCE login, unit, terms, 5x5 audit, results, approval, PDF and both themes
+ok 25 - Browser E2E: PKCE login, unit, terms, 5x5 audit, results, approval, PDF and both themes
+  ---
+  duration_ms: 3305.2514
+  ...
+# Subtest: Backup: stopped PostgreSQL physical backup restores records, immutable hashes and RLS
+ok 26 - Backup: stopped PostgreSQL physical backup restores records, immutable hashes and RLS
+  ---
+  duration_ms: 2418.9265
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16882.0182

@@ -1,0 +1,8 @@
+{
+  "reports": 2,
+  "measurements": 150,
+  "rlsVerified": true,
+  "immutableVerified": true,
+  "method": "PostgreSQL stopped physical copy",
+  "at": "2026-11-04T17:10:14.952Z"
+}

@@ -1,0 +1,23 @@
+# Local data and sensitive files: do not publish
+node_modules/
+local-data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+!.env.example
+resultado/
+resultado*.zip
+MEDICOES_JARES.csv
+*.log
+.DS_Store
+.vscode/
+playwright-report/
+test-results/
+dist/
+
+work/
+coverage/
+*.tsbuildinfo
+

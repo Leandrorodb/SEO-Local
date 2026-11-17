@@ -1,0 +1,69 @@
+name: Deploy to a configured environment
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+permissions: {contents: read, id-token: write}
+jobs:
+  deploy:
+    if: inputs.target == 'staging' || inputs.target == 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: ${{ inputs.target }}
+    env:
+      PROJECT: ${{ vars.GCP_PROJECT }}
+      REGION: ${{ vars.GCP_REGION }}
+      IMAGE: ${{ vars.ARTIFACT_IMAGE }}
+      API: ${{ vars.API_SERVICE }}
+      WORKER: ${{ vars.WORKER_SERVICE }}
+      MIGRATE: ${{ vars.MIGRATION_JOB }}
+      ORIGIN: ${{ vars.WEB_ORIGIN }}
+      VITE_OIDC_AUTHORITY: ${{ vars.VITE_OIDC_AUTHORITY }}
+      VITE_OIDC_CLIENT_ID: ${{ vars.VITE_OIDC_CLIENT_ID }}
+      TARGET: ${{ inputs.target }}
+      ENABLED: ${{ vars.CLOUD_PROMOTION_ENABLED }}
+      SIGNOFF_SHA: ${{ vars.REAL_AUDIT_SIGNOFF_SHA }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require reviewed environment, confirmed evidence and explicit configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$ENABLED" = true
+          if [ "$TARGET" = production ]; then test "$SIGNOFF_SHA" = "$GITHUB_SHA"; fi
+          test -n "$PROJECT" && test -n "$REGION" && test -n "$API" && test -n "$WORKER" && test -n "$MIGRATE"
+          [[ "$IMAGE" == "$REGION-docker.pkg.dev/$PROJECT/"* ]]
+          [[ "$ORIGIN" == https://* && "$VITE_OIDC_AUTHORITY" == https://* && -n "$VITE_OIDC_CLIENT_ID" ]]
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Build image for this environment and pin its digest
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --build-arg VITE_OIDC_AUTHORITY --build-arg VITE_OIDC_CLIENT_ID -f infra/Dockerfile -t "$IMAGE:$GITHUB_SHA" .
+          docker push "$IMAGE:$GITHUB_SHA"
+          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:$GITHUB_SHA")
+          [[ "$digest" == "$IMAGE@sha256:"* ]]
+          echo "PINNED_IMAGE=$digest" >> "$GITHUB_ENV"
+      - name: Migrate, deploy and verify the protected boundary
+        run: |
+          set -euo pipefail
+          flags=(--project "$PROJECT" --region "$REGION" --quiet)
+          gcloud run jobs update "$MIGRATE" --image "$PINNED_IMAGE" "${flags[@]}"
+          gcloud run jobs execute "$MIGRATE" --wait "${flags[@]}"
+          gcloud run services update "$WORKER" --image "$PINNED_IMAGE" "${flags[@]}"
+          gcloud run services update "$API" --image "$PINNED_IMAGE" "${flags[@]}"
+          for svc in "$API" "$WORKER"; do
+            revision=$(gcloud run services describe "$svc" "${flags[@]}" --format='value(status.latestReadyRevisionName)')
+            test -n "$revision"
+            actual=$(gcloud run revisions describe "$revision" "${flags[@]}" --format='value(status.imageDigest)')
+            test "${actual##*@}" = "${PINNED_IMAGE##*@}"
+            gcloud run services update-traffic "$svc" --to-revisions="$revision=100" "${flags[@]}"
+          done
+          curl -fsS --max-time 15 "$ORIGIN/health" | jq -e '.status == "ok" and .service == "Local Rank Tracker"'
+          test "$(curl -sS -o /dev/null --max-time 15 -w '%{http_code}' "$ORIGIN/v1/locations")" = 401

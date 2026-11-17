@@ -1,0 +1,127 @@
+@echo off
+setlocal EnableExtensions
+chcp 65001 >nul
+cd /d "%~dp0"
+title Enviar Local Rank Tracker para SEO-Local PRIVADO
+
+echo.
+echo ================================================
+echo  LOCAL RANK TRACKER - GITHUB SEO-LOCAL
+ echo ================================================
+echo Destino: https://github.com/Leandrorodb/SEO-Local
+echo Este script NAO realiza deploy no Firebase ou AI Studio.
+echo.
+
+where git >nul 2>&1
+if errorlevel 1 (
+ echo Git nao encontrado. Instale: https://git-scm.com/download/win
+ goto fim
+)
+where gh >nul 2>&1
+if errorlevel 1 (
+ echo GitHub CLI nao encontrado. Instale: https://cli.github.com/
+ goto fim
+)
+
+echo Verificando login no GitHub...
+gh auth status >nul 2>&1
+if errorlevel 1 (
+ gh auth login
+ if errorlevel 1 goto erro
+)
+set "LOGIN="
+for /f "usebackq delims=" %%U in (`gh api user --jq .login`) do set "LOGIN=%%U"
+if /i not "%LOGIN%"=="Leandrorodb" (
+ echo ERRO: Voce esta logado como %LOGIN%, mas o repositorio pertence a Leandrorodb.
+ echo Corrija o login: gh auth switch
+ goto fim
+)
+set "IS_PRIVATE="
+for /f "usebackq delims=" %%V in (`gh repo view Leandrorodb/SEO-Local --json isPrivate --jq .isPrivate`) do set "IS_PRIVATE=%%V"
+if /i not "%IS_PRIVATE%"=="true" (
+ echo ERRO: Repositorio nao encontrado ou nao privado. Nada foi enviado.
+ goto fim
+)
+
+if exist .env (
+ echo ATENCAO: Encontrado arquivo .env local. O .gitignore deve exclui-lo.
+)
+echo.
+echo ATENCAO: O projeto original contem dados legados de empresas na pasta legacy/data/.
+echo Verifique se voce tem autorizacao para enviar esse material ao GitHub privado
+echo e depois compartilhar o repositorio com o AI Studio.
+echo.
+set /p "CONFIRMA=Para autorizar envio ao repositorio PRIVADO, digite PUBLICAR: "
+if /i not "%CONFIRMA%"=="PUBLICAR" (
+ echo Operacao cancelada.
+ goto fim
+)
+
+if not exist .git\ (
+ git init -b main
+ if errorlevel 1 goto erro
+)
+
+git config user.name "%LOGIN%"
+for /f "usebackq delims=" %%I in (`gh api user --jq .id`) do set "GITHUB_ID=%%I"
+if not defined GITHUB_ID goto erro
+git config user.email "%GITHUB_ID%+%LOGIN%@users.noreply.github.com"
+
+git add -A
+if errorlevel 1 goto erro
+
+rem Prevent common accidental local-secret uploads.
+for /f "delims=" %%F in ('git diff --cached --name-only') do (
+ echo %%F | findstr /i /r /c:"^\.env$" /c:"^work/" /c:"\.sqlite$" /c:"\.pem$" /c:"\.p12$" >nul
+ if not errorlevel 1 (
+  echo ERRO: Arquivo confidencial no stage: %%F
+  goto fim
+ )
+)
+
+git diff --cached --quiet
+if errorlevel 1 (
+ git commit -m "Import Local Rank Tracker V4.8.1 into SEO-Local"
+ if errorlevel 1 goto erro
+)
+
+git branch -M main
+if errorlevel 1 goto erro
+
+set "REMOTE="
+for /f "usebackq delims=" %%R in (`git remote get-url origin 2^>nul`) do set "REMOTE=%%R"
+if defined REMOTE (
+ echo Remoto atual: %REMOTE%
+ echo %REMOTE% | findstr /i /c:"github.com/Leandrorodb/SEO-Local" >nul
+ if errorlevel 1 (
+  echo ERRO: Remote origin aponta para outro repositorio. Nada foi enviado.
+  goto fim
+ )
+) else (
+ git remote add origin https://github.com/Leandrorodb/SEO-Local.git
+ if errorlevel 1 goto erro
+)
+
+gh auth setup-git
+if errorlevel 1 goto erro
+
+echo.
+echo Enviando arquivos ao GitHub...
+git push -u origin main
+if errorlevel 1 goto erro
+
+echo.
+echo ================================================
+echo ENVIO CONCLUIDO!
+echo https://github.com/Leandrorodb/SEO-Local
+echo Depois: AI Studio - New app - + - Import from GitHub
+echo ================================================
+goto fim
+
+:erro
+echo.
+echo ERRO: Nao foi possivel finalizar. Tire um print desta janela.
+:fim
+echo.
+pause
+endlocal

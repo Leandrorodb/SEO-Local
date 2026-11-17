@@ -1,0 +1,158 @@
+ETAPA 1 b53140d
+A	.env.example
+M	.gitignore
+A	apps/api/analytics.ts
+A	apps/api/app.ts
+A	apps/api/auth.ts
+A	apps/api/main.ts
+A	apps/api/owner.ts
+A	apps/worker/main.ts
+A	apps/worker/worker.ts
+A	docs/ADR-001.md
+A	docs/AUDIT-BASELINE.md
+A	docs/ETAPA-1.md
+A	docs/LOCAL_RANK_TRACKER_ESPECIFICACAO_V3.md
+A	docs/LOCAL_RANK_TRACKER_PROMPT_AI_STUDIO_V3.md
+A	infra/bootstrap-owner.ts
+A	infra/local-postgres.ts
+R100	ARQUITETURA.md	legacy/ARQUITETURA.md
+R100	IMPORTAR_RESULTADO.bat	legacy/IMPORTAR_RESULTADO.bat
+R100	INICIAR_NEXUS.bat	legacy/INICIAR_NEXUS.bat
+R100	INICIAR_NEXUS.sh	legacy/INICIAR_NEXUS.sh
+R100	PUBLICAR_GITHUB_PRIVADO.bat	legacy/PUBLICAR_GITHUB_PRIVADO.bat
+A	legacy/README.md
+R100	ai-studio/FONTE_INTEGRAL_PARA_COLAR.txt	legacy/ai-studio/FONTE_INTEGRAL_PARA_COLAR.txt
+R100	ai-studio/GUIA_IMPORTACAO.md	legacy/ai-studio/GUIA_IMPORTACAO.md
+R100	ai-studio/PROMPT_MIGRACAO_AI_STUDIO.md	legacy/ai-studio/PROMPT_MIGRACAO_AI_STUDIO.md
+R100	data/jares-2-unidades.json	legacy/data/jares-2-unidades.json
+R100	data/jares-seed.json	legacy/data/jares-seed.json
+A	legacy/package.json
+R100	public/app.js	legacy/public/app.js
+R100	public/index.html	legacy/public/index.html
+R100	public/styles.css	legacy/public/styles.css
+R100	scripts/import-result.js	legacy/scripts/import-result.js
+R100	src/db.js	legacy/src/db.js
+R100	src/server.js	legacy/src/server.js
+R100	src/services/import.js	legacy/src/services/import.js
+R100	src/services/keywords.js	legacy/src/services/keywords.js
+R100	src/services/measurement.js	legacy/src/services/measurement.js
+R100	src/services/report.js	legacy/src/services/report.js
+R100	tests/import.test.js	legacy/tests/import.test.js
+R100	tests/measurement.test.js	legacy/tests/measurement.test.js
+R100	tests/new-units.test.js	legacy/tests/new-units.test.js
+M	package.json
+A	packages/contracts/index.ts
+A	packages/db/index.ts
+A	packages/db/migrate.ts
+A	packages/db/migrations/001_foundation.sql
+A	packages/db/migrations/002_budget.sql
+A	packages/db/migrations/003_plan_policies.sql
+A	packages/domain/audits.ts
+A	packages/domain/errors.ts
+A	packages/domain/keywords.ts
+A	packages/domain/maps.ts
+A	packages/rank-providers/index.ts
+A	pnpm-lock.yaml
+A	pnpm-workspace.yaml
+A	tests/domain.test.ts
+A	tests/integration/saas.test.ts
+A	tsconfig.json
+
+ETAPA 2 5cfc2d1
+A	.dockerignore
+M	.env.example
+A	.gitattributes
+A	.github/workflows/image.yml
+A	.github/workflows/validate.yml
+A	.prettierrc.json
+M	README.md
+M	apps/api/analytics.ts
+M	apps/api/app.ts
+M	apps/api/auth.ts
+A	apps/api/branding.ts
+M	apps/api/main.ts
+M	apps/api/owner.ts
+A	apps/api/static.ts
+A	apps/web/index.html
+A	apps/web/src/main.tsx
+A	apps/web/src/pages.tsx
+A	apps/web/src/session.ts
+A	apps/web/src/styles.css
+A	apps/web/src/types.ts
+A	apps/web/vite.config.ts
+M	apps/worker/main.ts
+A	apps/worker/server.ts
+M	apps/worker/worker.ts
+M	docs/ADR-001.md
+A	docs/ETAPA-2.md
+A	docs/openapi.json
+A	infra/Dockerfile
+A	infra/backup-restore.ts
+M	infra/bootstrap-owner.ts
+A	infra/build-server.ts
+A	infra/compose.yaml
+A	infra/generate-contract.ts
+M	infra/local-postgres.ts
+M	package.json
+M	packages/contracts/index.ts
+A	packages/contracts/openapi.ts
+M	packages/db/index.ts
+M	packages/db/migrate.ts
+A	packages/db/migrations/004_integrity_branding.sql
+A	packages/db/migrations/005_verified_position.sql
+M	packages/domain/audits.ts
+M	packages/domain/errors.ts
+M	packages/domain/keywords.ts
+M	packages/domain/maps.ts
+M	packages/rank-providers/index.ts
+A	packages/ui/index.tsx
+M	pnpm-lock.yaml
+M	tests/domain.test.ts
+A	tests/integration/browser-flow.ts
+M	tests/integration/saas.test.ts
+M	tsconfig.json
+
+ETAPA 3 / ENTREGA
+M	.dockerignore
+A	.github/workflows/cloud-target.yml
+A	.github/workflows/release.yml
+M	.github/workflows/validate.yml
+M	README.md
+M	apps/api/analytics.ts
+A	apps/api/signals.ts
+M	apps/web/src/main.tsx
+M	apps/web/src/pages.tsx
+M	apps/web/src/types.ts
+A	docs/ENTREGA.md
+A	docs/OPERACAO.md
+A	docs/evidence/DEMO-dark.png
+A	docs/evidence/DEMO-light.png
+A	docs/evidence/DEMO-relatorio.pdf
+A	docs/evidence/audit-prod.json
+A	docs/evidence/legado.tap.txt
+A	docs/evidence/restore.json
+A	docs/evidence/saas.tap.txt
+M	docs/openapi.json
+M	infra/local-postgres.ts
+A	infra/test-postgres.ts
+A	packages/db/migrations/006_insights.sql
+M	tests/domain.test.ts
+M	tests/integration/browser-flow.ts
+M	tests/integration/saas.test.ts
+A	docs/evidence/arquivos.txt
+
+ETAPA 4 / ATIVAÇÃO DA PRIMEIRA AUDITORIA
+M	apps/api/analytics.ts
+M	apps/web/src/pages.tsx
+M	docs/ENTREGA.md
+M	docs/evidence/DEMO-dark.png
+M	docs/evidence/DEMO-light.png
+M	docs/evidence/DEMO-relatorio.pdf
+M	docs/evidence/legado.tap.txt
+M	docs/evidence/restore.json
+M	docs/evidence/saas.tap.txt
+M	docs/openapi.json
+M	packages/contracts/openapi.ts
+A	packages/db/migrations/007_schedule_activation.sql
+M	tests/integration/saas.test.ts
+M	docs/evidence/arquivos.txt

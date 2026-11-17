@@ -1,0 +1,29 @@
+name: Promote reviewed commit
+on:
+  workflow_dispatch:
+    inputs:
+      production:
+        description: Promote to the protected production environment after staging
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: lrt-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/validate.yml
+  staging:
+    needs: validate
+    permissions: {contents: read, id-token: write}
+    uses: ./.github/workflows/cloud-target.yml
+    with: {target: staging}
+  production:
+    needs: staging
+    if: inputs.production
+    permissions: {contents: read, id-token: write}
+    uses: ./.github/workflows/cloud-target.yml
+    with: {target: production}

@@ -1,0 +1,452 @@
+[
+  {
+    "unit": "Jares Móveis — Pouso Alegre",
+    "city": "Pouso Alegre",
+    "lat": -22.23,
+    "lon": -45.933,
+    "namePattern": "jares moveis",
+    "cid": "d16aefdbdee3d709",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Fátima Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis avenida Prefeito Tuany Toledo"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "móveis residenciais Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "comprar sofá em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá reclinável Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "loja de estofados em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "loja de colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "cama box Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "comprar colchão em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Jantar e sala",
+        "term": "mesa de jantar em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "loja de mesas de jantar Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "poltronas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "aparador para sala Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "móveis para escritório em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "escrivaninha em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "guarda roupa em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Escritório e quarto",
+        "term": "camas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Fátima Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Tuany Toledo Pouso Alegre"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Móveis — Três Corações",
+    "city": "Três Corações",
+    "lat": -21.7,
+    "lon": -45.256,
+    "namePattern": "jares moveis",
+    "cid": "a66a135255d2a620",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "móveis em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Jardim Umuarama Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis avenida Rei Pelé Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Loja de móveis",
+        "term": "móveis residenciais em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "comprar sofá em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "estofados Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Jantar e sala",
+        "term": "mesa de jantar em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "loja de mesa de jantar Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "cadeiras de jantar Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "rack para sala Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "poltronas em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Jantar e sala",
+        "term": "aparador para sala Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Quarto e dormitórios",
+        "term": "camas em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "guarda roupa em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "loja de móveis para quarto Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quarto e dormitórios",
+        "term": "cabeceira de cama Três Corações"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Decoração e escritório",
+        "term": "loja de decoração em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis para escritório Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis de qualidade Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Decoração e escritório",
+        "term": "móveis para sala em Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Três Corações"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis avenida Rei Pelé"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Móveis Jardim Umuarama"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Outlet — Pouso Alegre",
+    "city": "Pouso Alegre",
+    "lat": -22.23,
+    "lon": -45.933,
+    "namePattern": "jares outlet",
+    "cid": "dfd82871c56fa6c5",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "outlet de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "loja outlet de móveis Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "móveis outlet Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Outlet e intenção",
+        "term": "comprar móveis em outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet e intenção",
+        "term": "outlet de móveis Jardim Santa Eliza Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet e intenção",
+        "term": "loja de móveis Rua Comendador José Garcia Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "loja de sofás em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Sofás e estofados",
+        "term": "sofá retrátil Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá reclinável Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofás de outlet em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás e estofados",
+        "term": "sofá com bom preço Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "colchões em Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Colchões e camas",
+        "term": "loja de colchões Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchões no outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "cama box em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Colchões e camas",
+        "term": "colchão casal Pouso Alegre"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis residenciais",
+        "term": "loja de móveis em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para sala Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para quarto Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "poltronas em Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Móveis residenciais",
+        "term": "móveis para casa Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis com desconto em Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis em promoção Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "móveis ponta de estoque Pouso Alegre"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Oportunidades condicionais",
+        "term": "sofá em promoção Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Sleep Center Outlet Pouso Alegre"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Marca e localização",
+        "term": "Jares Outlet Santa Eliza Pouso Alegre"
+      }
+    ]
+  }
+]

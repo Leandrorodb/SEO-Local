@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+ <meta name="theme-color" content="#0d181d"/>
+ <meta name="description" content="Nexus Local Rank Tracker — auditoria local com evidências."/>
+ <title>NEXUS | Local Rank Tracker</title>
+ <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+ <div class="shell">
+  <aside class="sidebar" id="sidebar">
+   <div class="brand"><div class="brandmark"><svg width="31" height="31" viewBox="0 0 36 36" fill="none"><path d="M5 29 18 5l13 24" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="m11 23 7-6 7 6" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></div><div><strong>NEXUS<span class="brand-dot">.</span></strong><small>LOCAL INTELLIGENCE</small></div></div>
+   <div class="sidebar-kicker">WORKSPACE</div>
+   <nav class="nav" aria-label="Navegação principal">
+    <button class="nav-item active" data-view="overview"><span class="nav-icon">▦</span> Visão geral</button>
+    <button class="nav-item" data-view="companies"><span class="nav-icon">▤</span> Empresas <span class="nav-count" id="nav-count">3</span></button>
+    <button class="nav-item" data-view="measurements"><span class="nav-icon">◎</span> Medições</button>
+    <button class="nav-item" data-view="reports"><span class="nav-icon">≡</span> Feedbacks</button>
+   </nav>
+   <div class="sidebar-spacer"></div>
+   <div class="sidebar-kicker">AMBIENTE LOCAL</div>
+   <div class="environment"><span class="pulse-dot"></span><div><strong>Operação independente</strong><small>Dados e prints no seu PC</small></div></div>
+   <div class="sidebar-footer"><span>Atlas / Operação Google</span><small>v1.1 · Sem tokens de IA</small></div>
+  </aside>
+  <div class="main-shell">
+   <header class="topbar">
+    <button class="mobile-menu icon-button" id="menu-button" aria-label="Abrir menu">☰</button>
+    <div class="breadcrumb">Operações <span>/</span> <strong id="crumb">Visão geral</strong></div>
+    <div class="top-actions"><span class="date-label" id="clock"></span><span class="top-pill"><i></i> Localhost seguro</span><div class="avatar">LR</div></div>
+   </header>
+   <main id="content" tabindex="-1"><div class="loading-view">Carregando seu painel Nexus…</div></main>
+  </div>
+ </div>
+ <div id="toast" role="status" aria-live="polite"></div>
+ <div class="modal-backdrop hidden" id="modal-backdrop"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><div class="eyebrow">NEXUS WORKSPACE</div><h2 id="modal-title"></h2></div><button id="modal-close" class="icon-button" aria-label="Fechar">×</button></div><div id="modal-body"></div></div></div>
+ <script src="/app.js" defer></script>
+</body>
+</html>

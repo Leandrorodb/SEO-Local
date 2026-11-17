@@ -1,0 +1,23 @@
+LOCAL RANK TRACKER V4.7 - VALIDACAO DE CODIGO (11/11/2026)
+============================================================
+Fonte: V4.6 consolidado + correcoes V4.7.
+
+PASSARAM nesta maquina:
+- 13 testes do medidor legado
+- 5 testes de coordenadas, enderecos e interrupcoes Google Maps
+- 3 testes de integridade do iniciador e do servidor compilado
+- 1 teste do OIDC local com PKCE/MFA por codigo
+- 1 teste do login local com PKCE automatico
+Total: 23 testes automatizados (executados sequencialmente).
+- 52 arquivos TS/TSX/MJS analisados pelo parser TypeScript: 0 erros de sintaxe.
+- Importacoes locais verificadas: nenhuma ausente.
+- Parse real do URL de Terremoto Moto Pecas Loja 2: CID 8850270806018122611 obtido de hex, sem consulta de rede.
+
+NAO FOI POSSIVEL VALIDAR:
+- pnpm build integrado React/Fastify/worker (npm registry retornou EAI_AGAIN).
+- Executar Chrome real com Google Maps no Windows do usuario.
+- Testes integrados do PostgreSQL apos a alteracao.
+- Avaliar mudancas reais da interface Google Maps, consentimento e limitacoes da plataforma.
+
+A V4.7 e uma correcao estruturada para homologacao, NAO um produto comercial 100% validado.
+O cadastro assistido usa dados confirmados pelo operador; identidades e rankings nao devem ser descritos como extraidos/confirmados pelo Google quando nao foram.

@@ -1,0 +1,19 @@
+name: Build reviewed container
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile
+          push: false
+          build-args: |
+            VITE_OIDC_AUTHORITY=${{ vars.VITE_OIDC_AUTHORITY }}
+            VITE_OIDC_CLIENT_ID=${{ vars.VITE_OIDC_CLIENT_ID }}

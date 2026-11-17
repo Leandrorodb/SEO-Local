@@ -1,0 +1,10 @@
+ALTER TABLE keyword_clusters ADD CONSTRAINT cluster_unit_key UNIQUE(organization_id,location_id,id);
+ALTER TABLE keywords ADD CONSTRAINT keyword_cluster_unit FOREIGN KEY(organization_id,location_id,cluster_id) REFERENCES keyword_clusters(organization_id,location_id,id);
+ALTER TABLE keywords ADD CONSTRAINT keyword_unit_key UNIQUE(organization_id,location_id,id);
+ALTER TABLE audit_runs ADD CONSTRAINT run_unit_key UNIQUE(organization_id,location_id,id);
+ALTER TABLE rank_measurements ADD CONSTRAINT measurement_run_unit FOREIGN KEY(organization_id,location_id,run_id) REFERENCES audit_runs(organization_id,location_id,id);
+ALTER TABLE rank_measurements ADD CONSTRAINT measurement_keyword_unit FOREIGN KEY(organization_id,location_id,keyword_id) REFERENCES keywords(organization_id,location_id,id);
+CREATE TABLE organization_branding(organization_id uuid PRIMARY KEY REFERENCES organizations,display_name text NOT NULL,logo_png bytea,logo_hash text,updated_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE organization_branding ENABLE ROW LEVEL SECURITY; ALTER TABLE organization_branding FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_branding ON organization_branding USING(organization_id=lrt_org() OR lrt_owner() OR lrt_system()) WITH CHECK(organization_id=lrt_org() OR lrt_owner());
+GRANT SELECT,INSERT,UPDATE ON organization_branding TO lrt_app;

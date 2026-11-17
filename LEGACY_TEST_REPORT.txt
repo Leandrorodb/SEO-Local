@@ -1,0 +1,94 @@
+TAP version 13
+# (node:3054) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: CSV parser supports quotes, embedded newlines and semicolons
+ok 1 - CSV parser supports quotes, embedded newlines and semicolons
+  ---
+  duration_ms: 1.72908
+  type: 'test'
+  ...
+# Subtest: imported CSV requires CID verification and prevents duplicates
+ok 2 - imported CSV requires CID verification and prevents duplicates
+  ---
+  duration_ms: 37.558006
+  type: 'test'
+  ...
+# Subtest: database migrates previous v1 database without deleting company data
+ok 3 - database migrates previous v1 database without deleting company data
+  ---
+  duration_ms: 22.962578
+  type: 'test'
+  ...
+# (node:3055) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: CID match positions exclude sponsored placements
+ok 4 - CID match positions exclude sponsored placements
+  ---
+  duration_ms: 1.228637
+  type: 'test'
+  ...
+# Subtest: name-only match is review, never verified
+ok 5 - name-only match is review, never verified
+  ---
+  duration_ms: 0.632741
+  type: 'test'
+  ...
+# Subtest: direct profile without list is not top one
+ok 6 - direct profile without list is not top one
+  ---
+  duration_ms: 0.136285
+  type: 'test'
+  ...
+# Subtest: local SQLite, seed and feedback without rankings
+ok 7 - local SQLite, seed and feedback without rankings
+  ---
+  duration_ms: 28.568767
+  type: 'test'
+  ...
+# Subtest: CSV sanitizes spreadsheet formulas
+ok 8 - CSV sanitizes spreadsheet formulas
+  ---
+  duration_ms: 0.523186
+  type: 'test'
+  ...
+# Subtest: keyword generator does not create ranking positions
+ok 9 - keyword generator does not create ranking positions
+  ---
+  duration_ms: 9.578355
+  type: 'test'
+  ...
+# Subtest: generic non-Jares company produces candidate for human review
+ok 10 - generic non-Jares company produces candidate for human review
+  ---
+  duration_ms: 0.442515
+  type: 'test'
+  ...
+# (node:3061) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: 76 termos, 2 lojas e CID distinto por cidade
+ok 11 - 76 termos, 2 lojas e CID distinto por cidade
+  ---
+  duration_ms: 1.497642
+  type: 'test'
+  ...
+# Subtest: migração incremental mantém 3 antigas e histórico
+ok 12 - migração incremental mantém 3 antigas e histórico
+  ---
+  duration_ms: 32.928931
+  type: 'test'
+  ...
+# Subtest: resultado de Varginha nao vira ranking de Lavras
+ok 13 - resultado de Varginha nao vira ranking de Lavras
+  ---
+  duration_ms: 0.961786
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 148.547077

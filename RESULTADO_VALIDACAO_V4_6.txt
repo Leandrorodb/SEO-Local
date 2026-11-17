@@ -1,0 +1,16 @@
+Local Rank Tracker V4.6 | validação no ambiente desta entrega
+
+Executados em sequência, sem rodar dois testes OIDC simultaneamente:
+- 10 testes da validação de ranking orgânico: OK
+- 9 testes de geração de palavras-chave e nichos: OK
+- 13 testes do medidor legado: OK
+- 3 testes de smoke/launcher: OK
+- 2 testes de autenticação local: OK
+TOTAL: 37 testes aprovados.
+
+Verificação sintática de 46 arquivos TypeScript/TSX: 0 erros.
+Resolução estática de imports locais TS: 0 imports ausentes.
+
+Não executados: pnpm build completo, teste PostgreSQL/Fastify, coleta real Chrome Windows.
+Bloqueio npm: registry.npmjs.org indisponível (EAI_AGAIN).
+Entrega honesta: código consolidado de homologação, não executável final pré-compilado.

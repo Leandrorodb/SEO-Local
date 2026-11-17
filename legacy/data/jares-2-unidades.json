@@ -1,0 +1,406 @@
+[
+  {
+    "unit": "Jares Móveis Lavras",
+    "city": "Lavras",
+    "lat": -21.2438,
+    "lon": -44.9883,
+    "cid": "494c784ebd090660",
+    "mapsUrl": "https://www.google.com/maps/place/Jares+M%C3%B3veis+-+Loja+de+M%C3%B3veis+em+Lavras/data=!4m2!3m1!1s0x0:0x494c784ebd090660?hl=pt-BR",
+    "address": "R. Otacílio Negrão de Lima, 324, Centro, Lavras, MG",
+    "namePattern": "jares moveis",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa Lavras MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais em Lavras"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "guarda roupa em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "guarda roupa Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "cômodas em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "cômodas Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "camas em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "camas Lavras MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "móveis para dormitório em Lavras"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Quartos",
+        "term": "móveis para dormitório Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "mesa de jantar em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "mesa de jantar Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "cadeiras para sala de jantar em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "cadeiras para sala de jantar Lavras MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "conjunto de mesa com cadeiras em Lavras"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Sala de jantar",
+        "term": "conjunto de mesa com cadeiras Lavras MG"
+      }
+    ]
+  },
+  {
+    "unit": "Jares Móveis Varginha",
+    "city": "Varginha",
+    "lat": -21.5556,
+    "lon": -45.4364,
+    "cid": "8b8401f5f5276586",
+    "mapsUrl": "https://www.google.com/maps/place/Jares+M%C3%B3veis+-+Loja+de+M%C3%B3veis+em+Varginha/data=!4m2!3m1!1s0x94ca9291aeee0b23:0x8b8401f5f5276586?hl=pt-BR",
+    "address": "Av. Major Venâncio, 451, Centro, Varginha, MG",
+    "namePattern": "jares moveis",
+    "terms": [
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de móveis Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "mobiliário Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "loja de mobiliário Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Loja de móveis",
+        "term": "comprar móveis Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para sala Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para quarto Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "móveis para casa Varginha MG"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais em Varginha"
+      },
+      {
+        "priority": "P1",
+        "cluster": "Móveis para casa",
+        "term": "loja de móveis residenciais Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "outlet de móveis em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "outlet de móveis Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis de outlet em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis de outlet Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis com desconto em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis com desconto Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis ponta de estoque em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Outlet",
+        "term": "móveis ponta de estoque Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofás Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "loja de sofás Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "sofá para sala Varginha MG"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá em Varginha"
+      },
+      {
+        "priority": "P2",
+        "cluster": "Sofás",
+        "term": "comprar sofá Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "guarda roupa em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "guarda roupa Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "camas em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "camas Varginha MG"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "móveis para dormitório em Varginha"
+      },
+      {
+        "priority": "P3",
+        "cluster": "Quarto",
+        "term": "móveis para dormitório Varginha MG"
+      }
+    ]
+  }
+]

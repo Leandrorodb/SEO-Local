@@ -1,0 +1,31 @@
+ATUALIZACAO 4.8 - RANKING COM PROVA
+
+Leia LEIA_PRIMEIRO_V4_8.md antes de substituir a V4.7.
+
+LOCAL RANK TRACKER 4.3 - WINDOWS / HOMOLOGACAO LOCAL
+=====================================================
+
+1. Extraia ESTE ZIP COMPLETO em uma pasta NOVA.
+2. Abra a pasta local-rank-tracker.
+3. De dois cliques em ABRIR_LOCAL_RANK_TRACKER.cmd.
+4. O sistema instala dependencias (se necessario), compila o programa e inicia o banco, a API,
+   o login de homologacao e o Chrome collector, e abre seu navegador.
+5. Na primeira abertura, o acesso acontece automaticamente neste computador.
+6. Clique em Empresas e unidades, cole o link Maps, confirme a ficha.
+7. Em Termos e clusters, gere termos e aprove os pertinentes em lote.
+8. Em Nova auditoria, selecione PONTO UNICO (para varios termos) e clique
+   em Calcular consultas e custo > Confirmar e medir agora.
+9. Para desligar: ENCERRAR_LOCAL_RANK_TRACKER.cmd.
+
+NAO COPIE ARQUIVOS DE OUTROS ZIPS PARA ESTA PASTA.
+Se a V4 antiga estiver aberta, clique em ENCERRAR na pasta antiga antes.
+O Node.js 22+ e pnpm ja estao instalados no seu Windows, conforme seus testes.
+A primeira instalacao das dependencias precisa de internet. O frontend e compilado automaticamente antes de abrir.
+
+MODO EXPERIMENTAL LOCAL: custo adicional de API de ranking R$ 0,
+sem garantia de ranking confirmado. Se o Google bloquear o Chrome ou a
+ficha nao puder ser identificada, o resultado ficara inconclusivo.
+Nao e hospedagem SaaS comercial pronta, nao e autorizacao de scraping.
+
+LOGS SE ALGO FALHAR: work/iniciador/*-erros.log
+NAO COMPARTILHE: .env, work/local-db, work/local-oidc ou credenciais.
