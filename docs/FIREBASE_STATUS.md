@@ -1,10 +1,11 @@
 # Firebase — estado verificável
 
-Decisão posterior do usuário: não pagar. Blaze e provedor pago descartados para
-esta etapa. Alternativa proposta, ainda não implementada: Firebase Spark para
-site/login/banco e coletor no computador do usuário. O adaptador Chrome legado
-é experimental e depende de PostgreSQL local; sua integração com Firebase,
-autorização, sincronização e precisão ainda precisam ser implementadas/testadas.
+Decisão posterior do usuário: não pagar e buscar BACKEND GRATUITO NA NUVEM.
+Blaze e provedor pago descartados para esta etapa. A sugestão de priorizar
+execução no computador foi uma interpretação errada. Alternativa candidata,
+ainda não implementada: API em hospedagem gratuita externa (Render/Netlify),
+preservando site/login/banco no Firebase Spark. Verificar limites, conta,
+fila/worker, autenticação e conexão frontend antes de prometer funcionamento.
 
 Atualização em 17/11/2026: `npm run typecheck` e `npm run build:firebase`
 passaram. Quatro testes de precisão e um teste de integração Auth/Firestore

@@ -1,19 +1,20 @@
 # Cole este prompt no Sonnet 4.6 do Antigravity
 
-**Decisão mais recente do usuário (17/11/2026): não pagar.** Não ativar Blaze,
-não vincular faturamento nem contratar provedor pago. Priorizar um desenho
-híbrido: Hosting/Auth/Firestore no Spark, respeitando as cotas, e coleta no
-computador do usuário. O coletor Chrome experimental já existe em
-`packages/rank-providers/local-chrome-preview.ts`, mas exige banco PostgreSQL
-local no legado e ainda NÃO está integrado ao Firebase. Adaptar e validar;
-não apenas mudar variáveis de ambiente nem prometer que já funciona. Definir
-autorização mínima para o agente local, fila e sincronização, sem service account
-ou segredo no frontend, sem abrir regras do Firestore e sem expor uma porta
-local publicamente. Medições novas dependerão do computador/agente ligado.
-Verificar os termos da fonte antes de automatizar uso comercial. Se coleta
-automática não for autorizada ou não produzir prova suficiente, oferecer coleta
-assistida e conferência humana, com origem e limitações explícitas.
-As opções pagas descritas adiante são apenas contexto histórico, não autorização.
+**Correção mais recente do usuário (17/11/2026): quer BACKEND GRATUITO NA NUVEM.**
+Não pagar, não ativar Blaze nem vincular faturamento. A sugestão anterior de
+priorizar execução no computador foi uma interpretação errada do pedido.
+Investigar hospedagem gratuita externa da API Node/Fastify, preservando
+Hosting/Auth/Firestore no Spark. Render Free é uma alternativa candidata
+(https://render.com/docs/free), ainda NÃO provisionada: verificar conta e termos
+atuais; suspende web services após 15 minutos sem tráfego e não equivale a um
+worker continuamente ativo. Outra possibilidade é adaptar a API para Netlify
+Functions no plano gratuito, verificando créditos e limites reais da conta.
+Não declarar que um serviço foi escolhido, criado ou publicado antes de fazê-lo.
+Adaptar entrypoint, secrets privados, Firebase Admin/IAM, CORS com origem exata,
+URL de API no frontend e processamento durável da fila. Não abrir regras nem
+expor service accounts no navegador. Separar disponibilidade do backend da fonte
+de resultados: uma API gratuita não fornece posições reais automaticamente.
+As opções pagas descritas adiante são contexto histórico, não autorização.
 
 Continue a implementação do meu sistema SEO-Local / Local Rank Tracker.
 Faça o trabalho no código existente e mantenha o Git atualizado. Minha primeira
