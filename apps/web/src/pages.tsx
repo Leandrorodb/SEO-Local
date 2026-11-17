@@ -118,6 +118,8 @@ export function Locations() {
         name: string;
         city: string;
         address: string;
+        lat: number;
+        lng: number;
         cid: string | null;
         placeId: string | null;
       }[];
