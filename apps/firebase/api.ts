@@ -197,11 +197,12 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
   });
   route('POST','/v1/locations/register-confirmed',async(r,reply)=>{
     const c=await context(r,writers), b=z.object({mapsUrl:z.string().max(2000),externalId:text,
-      resolveRequestId:z.string().min(1).max(128).optional()}).strict().parse(r.body);
+      resolveRequestId:z.string().min(1).max(128).optional(),brandId:uuid.optional()}).strict().parse(r.body);
     const parsed=parseMapsUrl(b.mapsUrl), hits=(await confirmedHits(c,parsed.url,b.resolveRequestId)).filter(x=>x.cid===b.externalId||x.placeId===b.externalId);
     requireThat(hits.length===1,409,'AMBIGUOUS_IDENTITY');const hit=hits[0];
     requireThat((!parsed.cid||parsed.cid===hit.cid)&&(!parsed.placeId||parsed.placeId===hit.placeId),409,'MAPS_IDENTITY_MISMATCH');
-    const result=await register(c,{name:hit.name,address:hit.address,city:hit.city,mapsUrl:parsed.url,lat:hit.lat,lng:hit.lng},hit);
+    const result=await register(c,{name:hit.name,address:hit.address,city:hit.city,mapsUrl:parsed.url,lat:hit.lat,lng:hit.lng,
+      ...(b.brandId ? {brandId:b.brandId} : {})},hit);
     reply.code(result.created?201:200);return result;
   });
   route('POST','/v1/locations/:id/confirm',async r=>{
