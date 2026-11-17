@@ -1,11 +1,12 @@
 import { api } from './session';
 
-export type MapsLookupResult<Candidate> = {
+type MapCandidate = { name: string; city: string; address: string; lat: number; lng: number };
+export type MapsLookupResult<Candidate extends MapCandidate> = {
   status: string;
   requestId?: string;
   candidates: Candidate[];
   missing?: string[];
-  partial?: Record<string, string | number | undefined>;
+  partial?: Partial<Pick<Candidate, 'name' | 'city' | 'address' | 'lat' | 'lng'>>;
 };
 
 /**
@@ -13,7 +14,7 @@ export type MapsLookupResult<Candidate> = {
  * resolution job and the browser polls for results written by the local agent.
  * A timeout is inconclusive; it never fabricates business identity data.
  */
-export async function lookupMapsWithCollector<Candidate>(
+export async function lookupMapsWithCollector<Candidate extends MapCandidate>(
   org: string,
   mapsUrl: string,
 ): Promise<MapsLookupResult<Candidate>> {
