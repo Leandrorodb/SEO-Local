@@ -1,4 +1,4 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import { getFirestore, Timestamp, type Firestore, type Transaction } from 'firebase-admin/firestore';
 import { randomUUID, createHash } from 'node:crypto';
@@ -25,7 +25,22 @@ export const millis = (value: any) => value instanceof Timestamp ? value.toMilli
 export const readers = ['org_admin', 'analyst', 'client_viewer'];
 export const writers = ['org_admin', 'analyst'];
 export function firebaseServices() {
-  const app = getApps()[0] ?? initializeApp();
+  let app = getApps()[0];
+  if (!app) {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      try {
+        const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        app = initializeApp({
+          credential: cert(sa),
+          projectId: sa.project_id || process.env.GCLOUD_PROJECT || 'seo-local-64b17',
+        });
+      } catch {
+        throw new Error('INVALID_FIREBASE_SERVICE_ACCOUNT_ENV');
+      }
+    } else {
+      app = initializeApp();
+    }
+  }
   return { db: getFirestore(app), auth: getAuth(app) };
 }
 export class Store {
@@ -63,7 +78,7 @@ export class Store {
           entitlement_status: 'ACTIVE', billing_status: 'INTERNAL', internal_owner_uid: token.uid,
           paid_through: Timestamp.fromDate(new Date('2099-01-01T00:00:00Z')),
           max_locations: 100, max_keywords: 5000, max_users: 20, max_monthly_queries: 10000,
-          monthly_budget_micros: 0, created_at: now(),
+          monthly_budget_micros: Number(process.env.ORGANIZATION_DEFAULT_BUDGET_MICROS || 10000000), created_at: now(),
           counts: { locations: 0, keywords: 0, active_keywords: 0, members: 1 },
         });
         tx.create(this.ref(orgId, 'members', token.uid), { user_id: token.uid, role: 'org_admin', status: 'ACTIVE', location_ids: [], created_at: now() });

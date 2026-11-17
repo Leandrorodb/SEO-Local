@@ -34,7 +34,8 @@ export function parseMapsUrl(input: string) {
   const cid = decimal ?? (hex ? BigInt('0x' + hex).toString() : null);
   if (cid)
     requireThat(BigInt(cid) > 0n && BigInt(cid) <= 18446744073709551615n, 422, 'INVALID_CID');
-  const placeId = u.searchParams.get('query_place_id') ?? u.searchParams.get('place_id');
+  const protobufPlaceId = decodeURIComponent(u.pathname + u.search).match(/!19s([a-zA-Z0-9_-]{10,255})/)?.[1];
+  const placeId = u.searchParams.get('query_place_id') ?? u.searchParams.get('place_id') ?? protobufPlaceId ?? null;
   requireThat(!placeId || /^[a-zA-Z0-9_-]{10,255}$/.test(placeId), 422, 'INVALID_PLACE_ID');
   return { url: u.toString(), cid, placeId, requiresResolution: true, shortLink: short };
 }

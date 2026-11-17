@@ -1,4 +1,5 @@
 import Fastify, { type FastifyRequest, type FastifyReply, type HTTPMethods } from 'fastify';
+import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { z } from 'zod';
@@ -14,7 +15,7 @@ import { listNiches, suggestKeywords } from '../../packages/domain/auto-keywords
 import { compareHistory, feedbackText, pdfBytes } from '../api/analytics.js';
 import { alertRules, signals } from '../api/signals.js';
 import { registerFirebaseOwner } from './owner.js';
-import { createAudit } from './worker.js';
+import { createAudit, dispatchAudit } from './worker.js';
 
 export type FirebaseApiOptions = { store: Store; auth: Auth; provider?: CloudProvider; logging?: boolean };
 type Request = FastifyRequest<{ Params: Record<string, string> }>;
@@ -30,8 +31,21 @@ const sorted = (rows: Doc[]) => rows.sort((a,b) => String(a.term ?? a.name).loca
 export function buildFirebaseApp(options: FirebaseApiOptions) {
   const { store, auth } = options;
   const provider: CloudProvider = options.provider ?? new DataForSeoProvider();
-  const app = Fastify({ logger: options.logging ?? false, bodyLimit: 200000, trustProxy: false });
-  app.register(helmet);
+  const app = Fastify({ logger: options.logging ?? false, bodyLimit: 200000, trustProxy: true });
+  app.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
+      if (/^https:\/\/seo-local-64b17\.(web\.app|firebaseapp\.com)$/.test(origin)) return cb(null, true);
+      const custom = process.env.CORS_ALLOWED_ORIGIN;
+      if (custom && origin === custom) return cb(null, true);
+      return cb(new Error('CORS_NOT_ALLOWED'), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Organization-Id', 'Idempotency-Key'],
+  });
+  app.register(helmet, { crossOriginResourcePolicy: { policy: 'cross-origin' } });
   app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
   app.setErrorHandler((e, r, reply) => {
     if (e instanceof z.ZodError) return reply.code(422).send({error:{code:'INVALID_INPUT',requestId:r.id}});
@@ -207,7 +221,13 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
   });
   route('POST','/v1/locations/:id/audits',async(r,reply)=>{
     const c=await context(r,writers),b=auditInput.parse(r.body),result=await createAudit(store,c,r.params.id,b,provider,String(r.headers['idempotency-key']??''));
-    if(!b.dryRun)reply.code(201);return result;
+    if(!b.dryRun) {
+      reply.code(201);
+      if ('runId' in result && !('replayed' in result && result.replayed)) {
+        await dispatchAudit(store, c.org, result.runId);
+      }
+    }
+    return result;
   });
   route('GET','/v1/locations/:id/audits',async r=>{const c=await context(r);await store.location(c,r.params.id);return byDate(await store.list(c.org,'audits',r.params.id));});
   route('GET','/v1/audits/:id',async r=>{

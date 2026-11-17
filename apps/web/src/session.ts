@@ -95,6 +95,9 @@ export const errorText = (e: unknown) =>
       : e instanceof Error
         ? e.message
         : 'Não foi possível concluir a operação.';
+const apiOrigin = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/+$/, '') ?? '';
+const apiBase = apiOrigin ? apiOrigin + '/v1' : '/v1';
+
 export async function api<T>(
   url: string,
   org: string,
@@ -103,7 +106,7 @@ export async function api<T>(
   key?: string,
 ): Promise<T> {
   if (!legacyTestAuth) bearer = await currentFirebaseToken();
-  const response = await fetch('/v1' + url, {
+  const response = await fetch(apiBase + url, {
     method,
     headers: {
       ...(bearer ? { Authorization: 'Bearer ' + bearer } : {}),
@@ -125,7 +128,7 @@ export async function api<T>(
 }
 export async function downloadPdf(id: string, org: string) {
   if (!legacyTestAuth) bearer = await currentFirebaseToken();
-  const response = await fetch('/v1/reports/' + id + '/pdf', {
+  const response = await fetch(apiBase + '/reports/' + id + '/pdf', {
     headers: { Authorization: 'Bearer ' + bearer, 'X-Organization-Id': org },
   });
   if (!response.ok) {

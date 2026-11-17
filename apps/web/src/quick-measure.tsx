@@ -293,7 +293,7 @@ export function QuickMeasure() {
     if (!selected || !gridId || quote?.status !== 'PREFLIGHT_OK' || !approveAudit) return;
     const response = await run(() => api<{ runId: string }>(`/locations/${selected.id}/audits`, w.org, {
       gridId, surface: 'MAPS', language: 'pt-BR', device: 'desktop',
-      maxProviderBudgetUsdMicros: 0, dryRun: false,
+      maxProviderBudgetUsdMicros: quote.estimatedCostUsdMicros ?? 0, dryRun: false,
     }), 'Auditoria iniciada. Acompanhe a execução abaixo.');
     if (response?.runId) setRunId(response.runId);
   }
