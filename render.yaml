@@ -4,10 +4,12 @@ services:
     env: node
     plan: free
     region: ohio
-    buildCommand: npm ci
-    startCommand: node --env-file-if-exists=.env --import tsx apps/firebase/server.ts
+    buildCommand: npm ci --include=dev && npm run typecheck && npm run build:render
+    startCommand: node dist/render/server.js
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: 24.22.3
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -18,5 +20,7 @@ services:
         sync: false
       - key: CORS_ALLOWED_ORIGIN
         value: https://seo-local-64b17.web.app
+      - key: RANK_PROVIDER
+        value: disabled
       - key: RANK_GLOBAL_MONTHLY_BUDGET_MICROS
         value: 10000000
