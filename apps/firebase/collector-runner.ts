@@ -12,10 +12,11 @@ import {
 if (!localPreviewEnabled()) {
   throw new Error('LOCAL_COLLECTOR_NOT_AUTHORIZED: enable explicit local Chrome evaluation.');
 }
-const org = process.env.LRT_COLLECTOR_ORGANIZATION_ID?.trim();
-if (!org) {
+const orgInput = process.env.LRT_COLLECTOR_ORGANIZATION_ID?.trim();
+if (!orgInput) {
   throw new Error('LRT_COLLECTOR_ORGANIZATION_ID must explicitly identify one authorized organization.');
 }
+const org: string = orgInput;
 const { db } = firebaseServices();
 const store = new Store(db);
 const provider = new LocalChromeCloudProvider();
