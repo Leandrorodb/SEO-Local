@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: seo-local-api
+    env: node
+    plan: free
+    region: ohio
+    buildCommand: npm ci
+    startCommand: node --env-file-if-exists=.env --import tsx apps/firebase/server.ts
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: OWNER_EMAIL
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: CORS_ALLOWED_ORIGIN
+        value: https://seo-local-64b17.web.app
+      - key: RANK_GLOBAL_MONTHLY_BUDGET_MICROS
+        value: 10000000

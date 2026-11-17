@@ -35,11 +35,15 @@ export function localPreviewEnabled() {
   // This adapter launches the browser inside the local worker, and must never
   // be activated by a remote deployment accidentally inheriting an .env file.
   let localDatabase = false;
-  try {
-    const database = new URL(process.env.DATABASE_URL ?? '');
-    localDatabase = ['localhost', '127.0.0.1', '[::1]'].includes(database.hostname);
-  } catch { /* A missing database is not a valid opt-in. */ }
-  return ['staging', 'development'].includes(process.env.NODE_ENV ?? '') &&
+  if (process.env.DATABASE_URL) {
+    try {
+      const database = new URL(process.env.DATABASE_URL);
+      localDatabase = ['localhost', '127.0.0.1', '[::1]'].includes(database.hostname);
+    } catch { /* A missing database is not a valid opt-in. */ }
+  } else if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GCLOUD_PROJECT || process.env.RANK_PROVIDER === 'local_chrome_preview') {
+    localDatabase = true;
+  }
+  return ['staging', 'development', 'test'].includes(process.env.NODE_ENV ?? '') &&
     process.env.RANK_PROVIDER === 'local_chrome_preview' &&
     process.env.LRT_LOCAL_EVAL === 'I_ACCEPT_LOCAL_ONLY_EXPERIMENTAL_USE' &&
     localDatabase;

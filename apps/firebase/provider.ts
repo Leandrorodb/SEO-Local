@@ -3,6 +3,7 @@ import { requireThat } from '../../packages/domain/errors.js';
 import type { RankQuery } from '../../packages/contracts/index.js';
 import { parseMapsUrl } from '../../packages/domain/maps.js';
 import { digest } from './store.js';
+import { LocalChromePreviewProvider } from '../../packages/rank-providers/local-chrome-preview.js';
 
 export const candidateSchema = z.object({ name: z.string().trim().min(1).max(240), address: z.string().trim().min(1).max(500),
   city: z.string().trim().min(1).max(240), category: z.string().max(240).optional(), lat: z.number().min(-85).max(85),
@@ -89,4 +90,72 @@ export class DataForSeoProvider implements CloudProvider {
     return { observedAt, taskRef: task.id, depth: q.depth, complete: result.type === 'maps' && !result.spell,
       costMicros, items, evidence: { source: this.id, ...(typeof result.check_url==='string'?{checkUrl:result.check_url}:{}), responseHash } };
   }
+}
+
+export class LocalChromeCloudProvider implements CloudProvider {
+  id = 'local_chrome_preview';
+  demo = false;
+  enabled: boolean;
+  maxCostMicros = 0;
+  private chrome = new LocalChromePreviewProvider();
+
+  constructor(private env: Record<string, string | undefined> = process.env) {
+    this.enabled = env.RANK_PROVIDER === 'local_chrome_preview' &&
+      env.LRT_LOCAL_EVAL === 'I_ACCEPT_LOCAL_ONLY_EXPERIMENTAL_USE';
+  }
+
+  async resolve(url: string): Promise<Candidate[]> {
+    requireThat(this.enabled, 503, 'PROVIDER_UNAVAILABLE');
+    const outcome = await this.chrome.resolveWithDiagnostics(url);
+    if (!outcome.candidates.length) {
+      if (outcome.status === 'MAPS_ACCESS_BLOCKED') requireThat(false, 502, 'MAPS_ACCESS_BLOCKED');
+      if (outcome.status === 'MAPS_CONSENT_REQUIRED') requireThat(false, 502, 'MAPS_CONSENT_REQUIRED');
+      if (outcome.status === 'MAPS_DETAILS_INCOMPLETE') requireThat(false, 422, 'MAPS_DETAILS_INCOMPLETE');
+      if (outcome.status === 'MAPS_IDENTITY_MISMATCH') requireThat(false, 409, 'MAPS_IDENTITY_MISMATCH');
+    }
+    return outcome.candidates.map(x => candidateSchema.parse({
+      name: x.name,
+      address: x.address,
+      city: x.city,
+      category: x.category,
+      lat: x.lat,
+      lng: x.lng,
+      cid: x.cid ?? null,
+      placeId: x.placeId ?? null,
+    }));
+  }
+
+  async measure(query: RankQuery, taskId: string): Promise<Capture> {
+    requireThat(this.enabled, 503, 'PROVIDER_UNAVAILABLE');
+    requireThat(query.surface === 'MAPS' && query.device === 'desktop', 422, 'UNSUPPORTED_SURFACE');
+    const result = await this.chrome.measure(query, taskId);
+    const complete = result.complete && !result.failure;
+    const items = (result.items ?? []).map(x => ({
+      name: x.name,
+      cid: x.cid ?? null,
+      placeId: x.placeId ?? null,
+      position: x.position,
+      sponsored: Boolean(x.sponsored),
+    }));
+    return {
+      observedAt: result.observedAt,
+      taskRef: result.taskRef,
+      depth: result.depth,
+      complete,
+      costMicros: 0,
+      items,
+      evidence: {
+        source: this.id,
+        checkUrl: `https://www.google.com/maps/search/${encodeURIComponent(query.term)}/@${query.lat},${query.lng},15z?hl=pt-BR`,
+        responseHash: digest({ items, taskRef: result.taskRef, complete }),
+      },
+    };
+  }
+}
+
+export function getCloudProvider(env: Record<string, string | undefined> = process.env): CloudProvider {
+  if (env.RANK_PROVIDER === 'local_chrome_preview') {
+    return new LocalChromeCloudProvider(env);
+  }
+  return new DataForSeoProvider(env);
 }

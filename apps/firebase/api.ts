@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { Auth } from 'firebase-admin/auth';
 import { Store, type Context, type Doc, type Principal, digest, id, now, wire, millis, readers, writers, docId } from './store.js';
-import { DataForSeoProvider, type CloudProvider, candidateSchema } from './provider.js';
+import { DataForSeoProvider, getCloudProvider, type CloudProvider, candidateSchema } from './provider.js';
 import { AppError, requireThat } from '../../packages/domain/errors.js';
 import { locationInput, auditInput, pasteInput, text, uuid } from '../../packages/contracts/index.js';
 import { parseMapsUrl, grid5x5 } from '../../packages/domain/maps.js';
@@ -30,7 +30,7 @@ const sorted = (rows: Doc[]) => rows.sort((a,b) => String(a.term ?? a.name).loca
 
 export function buildFirebaseApp(options: FirebaseApiOptions) {
   const { store, auth } = options;
-  const provider: CloudProvider = options.provider ?? new DataForSeoProvider();
+  const provider: CloudProvider = options.provider ?? getCloudProvider();
   const app = Fastify({ logger: options.logging ?? false, bodyLimit: 200000, trustProxy: true });
   app.register(cors, {
     origin: (origin, cb) => {
