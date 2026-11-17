@@ -37,7 +37,8 @@
     "firebase:api": "node --env-file-if-exists=.env --import tsx apps/firebase/dev.ts",
     "server:firebase": "node --env-file-if-exists=.env --import tsx apps/firebase/server.ts",
     "worker:collector": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts",
-    "worker:collector:once": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts --once"
+    "worker:collector:once": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts --once",
+    "build:render": "tsx infra/build-render.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
