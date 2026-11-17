@@ -2,6 +2,7 @@ import { downloadRankingCsv } from './ranking-export';
 import { useState, useRef, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, downloadPdf, errorText } from './session';
+import { lookupMapsWithCollector } from './maps-lookup';
 import { useWorkspace, PageTitle, LocationPicker } from './main';
 import { Empty, Panel, Badge, Table } from '../../../packages/ui/index';
 import type { Location, Keyword, Grid, Run, Ranking, Report, Organization, Rank } from './types';
@@ -102,16 +103,17 @@ export function Locations() {
     [open, setOpen] = useState(false),
     [discovery, setDiscovery] = useState<{
       url: string;
-      status?: string; missing?: string[];
+      status?: string; missing?: string[]; requestId?: string;
       items: {
         name: string; city: string; address: string;
         lat: number; lng: number; cid: string | null; placeId: string | null;
       }[];
     } | null>(null),
-    [chosen, setChosen] = useState<{ url: string; externalId: string } | null>(null),
+    [chosen, setChosen] = useState<{ url: string; externalId: string; requestId?: string } | null>(null),
     [filter, setFilter] = useState(''),
     [candidates, setCandidates] = useState<{
       id: string;
+      requestId?: string;
       items: {
         name: string;
         city: string;
@@ -130,10 +132,9 @@ export function Locations() {
     if (!url) return;
     setChosen(null);
     setDiscovery(null);
-    const result = await w.act(() => api<{
-      candidates: NonNullable<typeof discovery>['items']; status: string; missing?: string[];
-    }>('/locations/resolve', w.org, { mapsUrl: url }));
-    if (result) setDiscovery({ url, items: result.candidates, status: result.status, missing: result.missing });
+    const result = await w.act(() => lookupMapsWithCollector<NonNullable<typeof discovery>['items'][number]>(w.org, url));
+    if (result) setDiscovery({ url, items: result.candidates, status: result.status,
+      missing: result.missing, requestId: result.requestId });
   }
   function useCandidate(candidate: NonNullable<typeof discovery>['items'][number]) {
     const form = formRef.current;
@@ -149,30 +150,25 @@ export function Locations() {
       if (input) input.value = value;
     }
     const externalId = candidate.cid ?? candidate.placeId;
-    setChosen(externalId ? { url: discovery.url, externalId } : null);
+    setChosen(externalId ? { url: discovery.url, externalId, requestId:discovery.requestId } : null);
   }
   async function save(e: FormEvent<HTMLFormElement>) {
     const b = values(e);
-    const result = await w.act(() =>
-      api<Location>('/locations', w.org, {
-        ...(b.brandId ? { brandId: b.brandId } : {}),
-        name: b.name,
-        city: b.city,
-        address: b.address,
-        mapsUrl: b.mapsUrl,
-        lat: Number(b.lat),
-        lng: Number(b.lng),
-      }),
-    );
-    if (result) {
-      if (chosen && chosen.url === String(b.mapsUrl).trim()) {
-        // The backend re-resolves and validates this identity; client confirmation
-        // is never a substitute for the server-side evidence check.
-        await w.act(() => api('/locations/' + result.id + '/confirm', w.org, {
-          externalId: chosen.externalId,
-        }), 'Ficha identificada e confirmada.');
-      }
-      w.setLocation(result.id);
+    const verified = chosen && chosen.url === String(b.mapsUrl).trim();
+    const location = verified
+      ? await w.act(async () => (await api<{location:Location;created:boolean}>(
+          '/locations/register-confirmed', w.org, {
+            mapsUrl:b.mapsUrl,externalId:chosen.externalId,
+            ...(chosen.requestId ? {resolveRequestId:chosen.requestId} : {}),
+            ...(b.brandId ? {brandId:b.brandId} : {}),
+          })).location, 'Ficha identificada e confirmada.')
+      : await w.act(() => api<Location>('/locations', w.org, {
+          ...(b.brandId ? { brandId: b.brandId } : {}),
+          name:b.name,city:b.city,address:b.address,mapsUrl:b.mapsUrl,
+          lat:Number(b.lat),lng:Number(b.lng),
+        }));
+    if (location) {
+      w.setLocation(location.id);
       setOpen(false);
       setDiscovery(null);
       setChosen(null);
@@ -302,11 +298,9 @@ export function Locations() {
                     <button
                       onClick={() =>
                         void w.act(async () => {
-                          const r = await api<{
-                            candidates: NonNullable<typeof candidates>['items'];
-                            status: string;
-                          }>('/locations/resolve', w.org, { mapsUrl: l.maps_url });
-                          setCandidates({ id: l.id, items: r.candidates });
+                          const r = await lookupMapsWithCollector<NonNullable<typeof candidates>['items'][number]>(
+                            w.org, l.maps_url);
+                          setCandidates({ id:l.id, items:r.candidates, requestId:r.requestId });
                           return r;
                         }, 'Consulta de identidade concluída.')
                       }
@@ -342,6 +336,7 @@ export function Locations() {
                       .act(() =>
                         api('/locations/' + candidates.id + '/confirm', w.org, {
                           externalId: c.cid ?? c.placeId,
+                          ...(candidates.requestId ? {resolveRequestId:candidates.requestId} : {}),
                         }),
                       )
                       .then(() => setCandidates(null))
