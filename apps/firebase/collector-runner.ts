@@ -44,6 +44,41 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => { running = false; });
 }
 
+/** Resolve one Maps listing on the local browser without granting Chrome to Render. */
+async function resolveRequests() {
+  const requests = await store.col(org!, 'resolve_requests')
+    .where('state', '==', 'QUEUED').limit(3).get();
+  for (const item of requests.docs) {
+    if (!running) break;
+    const ref = item.ref;
+    const request = await db.runTransaction(async tx => {
+      const existing = await tx.get(ref);
+      if (!existing.exists || existing.data()?.state !== 'QUEUED' ||
+          existing.data()?.provider !== LOCAL_PROVIDER_ID) return null;
+      tx.update(ref, { state: 'RUNNING', worker_id: workerId, started_at: Timestamp.now() });
+      return existing.data()!;
+    });
+    if (!request) continue;
+    try {
+      const candidates = await provider.resolve(request.maps_url);
+      await ref.update({ state: 'DONE', status:candidates.length?'REVIEW_REQUIRED':'MAPS_DETAILS_INCOMPLETE',
+        candidates, finished_at: Timestamp.now() });
+      console.log(`[COLETOR] Identificação ${item.id}: ${candidates.length} candidato(s)`);
+    } catch (error) {
+      console.error('[COLETOR] Falha ao identificar empresa:', error);
+      await ref.update({ state: 'FAILED', failure: 'MAPS_LOOKUP_FAILED', finished_at: Timestamp.now() });
+    }
+  }
+  // Never run another collector's abandoned request as if it were fresh.
+  const unresolved = await store.col(org!, 'resolve_requests').where('state','==','RUNNING').limit(20).get();
+  for (const item of unresolved.docs) {
+    const started = item.data().started_at?.toMillis?.();
+    if (typeof started === 'number' && Date.now() - started > 5 * 60_000) {
+      await item.ref.update({ state: 'FAILED', failure: 'MAPS_LOOKUP_TIMEOUT', finished_at: Timestamp.now() });
+    }
+  }
+}
+
 async function run() {
   // Presence is scoped to exactly one authorized organization.
   await heartbeat();
@@ -59,6 +94,7 @@ async function run() {
   while (running) {
     try {
       // Never scan or mutate tasks owned by another organization.
+      await resolveRequests();
       await recoverStalledTasks(store, org);
       const pending = await store.col(org, 'tasks')
         .where('state', '==', 'QUEUED').limit(5).get();
@@ -71,7 +107,7 @@ async function run() {
         console.log(`[COLETOR] task=${doc.id}; status=${outcome?.status ?? 'PENDING'}; position=${outcome?.position ?? 'INCONCLUSIVE'}`);
       }
       if (once) break;
-      if (pending.empty) await new Promise(resolve => setTimeout(resolve, 4000));
+      await new Promise(resolve => setTimeout(resolve, 4000));
     } catch (error) {
       console.error('[COLETOR] Processing error:', error);
       if (once) throw error;
