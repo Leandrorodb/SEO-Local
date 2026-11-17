@@ -136,7 +136,9 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
 
 // A request that might have reached a paid provider is never blindly retried.
 // Expired leases are surfaced for reconciliation instead of duplicating costs.
-export async function recoverStalledTasks(store:Store){
-  const stale=await store.db.collectionGroup('tasks').where('state','==','RUNNING').where('started_at','<',Timestamp.fromMillis(Date.now()-15*60000)).limit(100).get();
+export async function recoverStalledTasks(store:Store, org?:string){
+  // Local collectors must never reconcile another tenant's tasks.
+  const source = org ? store.col(org,'tasks') : store.db.collectionGroup('tasks');
+  const stale=await source.where('state','==','RUNNING').where('started_at','<',Timestamp.fromMillis(Date.now()-15*60000)).limit(100).get();
   for(const task of stale.docs)await task.ref.update({state:'RECONCILIATION_REQUIRED',failure:'INTERRUPTED_PROVIDER_REQUEST',updated_at:now()});
 }
