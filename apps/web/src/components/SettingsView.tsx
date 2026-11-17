@@ -23,7 +23,7 @@ export function SettingsView() {
       <div className="two-columns">
         <Panel
           title="Conexão e Serviços Externos"
-          subtitle="Diagnóstico ao vivo consultado em /health na mesma origem."
+          subtitle="Diagnóstico ao vivo da API e do Cloud Firestore."
           action={
             <button type="button" onClick={() => void w.refreshHealth()}>
               Atualizar diagnóstico

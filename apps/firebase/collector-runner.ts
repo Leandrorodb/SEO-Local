@@ -25,6 +25,7 @@ const workerId = randomUUID();
 const presence = db.doc(collectorDocumentPath(org));
 let running = true;
 let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+let lastRecoveryAt = 0;
 
 async function heartbeat() {
   await db.runTransaction(async tx => {
@@ -96,7 +97,10 @@ async function run() {
     try {
       // Never scan or mutate tasks owned by another organization.
       await resolveRequests();
-      await recoverStalledTasks(store, org);
+      if (Date.now() - lastRecoveryAt > 60_000) {
+        await recoverStalledTasks(store, org);
+        lastRecoveryAt = Date.now();
+      }
       const pending = await store.col(org, 'tasks')
         .where('state', '==', 'QUEUED').limit(5).get();
       for (const doc of pending.docs) {
@@ -108,7 +112,9 @@ async function run() {
         console.log(`[COLETOR] task=${doc.id}; status=${outcome?.status ?? 'PENDING'}; position=${outcome?.position ?? 'INCONCLUSIVE'}`);
       }
       if (once) break;
-      await new Promise(resolve => setTimeout(resolve, 4000));
+      // Empty queries also consume Firestore quota. Keep idle polling within
+      // the Spark allowance instead of issuing several reads every 4 seconds.
+      await new Promise(resolve => setTimeout(resolve, 15_000));
     } catch (error) {
       console.error('[COLETOR] Processing error:', error);
       if (once) throw error;

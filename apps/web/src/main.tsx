@@ -19,6 +19,7 @@ import {
   ApiError,
   authErrorText,
   errorText,
+  apiOrigin,
 } from './session';
 import { parseApiHealthPayload, type ApiHealthState } from './auth-config';
 import {
@@ -45,6 +46,7 @@ import {
   Owner,
 } from './pages';
 import './styles.css';
+import { FirebaseMfaChallenge, FirebaseMfaEnrollment } from './firebase-security';
 
 type Workspace = {
   org: string;
@@ -137,7 +139,7 @@ function App() {
 
   const refreshHealth = useCallback(async () => {
     try {
-      const res = await fetch('/health');
+      const res = await fetch(apiOrigin + '/health', {signal:AbortSignal.timeout(90000)});
       const text = await res.text();
       setApiHealth(parseApiHealthPayload(res.status, res.headers.get('content-type'), text));
     } catch {
@@ -530,12 +532,12 @@ function App() {
 
           <div className="sidebar-bottom">
             <Badge tone={signed ? 'ok' : 'warn'}>
-              {signed ? 'Sessão OIDC verificada' : 'Preview isolado de UI'}
+              {signed ? 'Sessão Firebase verificada' : 'Preview isolado de UI'}
             </Badge>
             <small>
               {signed
-                ? 'Histórico com rastreabilidade e RLS no PostgreSQL.'
-                : 'Rotas /v1, MFA e RLS permanecem bloqueados no servidor.'}
+                ? 'Dados isolados por organização e evidências de medição.'
+                : 'Ambiente de acompanhamento sem acesso aos dados.'}
             </small>
           </div>
         </aside>
@@ -634,6 +636,7 @@ function App() {
               </div>
             )}
 
+            {signed && me.data && role === 'org_admin' && !me.data.mfa && import.meta.env.VITE_AUTH_MODE !== 'oidc-test' && <FirebaseMfaEnrollment />}
             {signed && me.error ? (
               <Empty title="Não foi possível acessar">{errorText(me.error)}</Empty>
             ) : signed && blocked && locationPath() !== '/owner' ? (
@@ -999,6 +1002,7 @@ createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={client}>
     <BrowserRouter>
       <App />
+      <FirebaseMfaChallenge />
     </BrowserRouter>
   </QueryClientProvider>,
 );

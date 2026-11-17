@@ -95,7 +95,7 @@ export const errorText = (e: unknown) =>
       : e instanceof Error
         ? e.message
         : 'Não foi possível concluir a operação.';
-const apiOrigin = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/+$/, '') ?? '';
+export const apiOrigin = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/+$/, '') ?? '';
 const apiBase = apiOrigin ? apiOrigin + '/v1' : '/v1';
 
 export async function api<T>(
