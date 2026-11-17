@@ -34,8 +34,10 @@ export async function createAudit(store:Store,c:Context,locationId:string,input:
     requireThat(Number.isSafeInteger(globalLimit)&&globalLimit>0&&g.cost+g.reserved+estimatedCost<=globalLimit,429,'GLOBAL_PROVIDER_BUDGET_EXCEEDED');
     requireThat(used.units+plannedTasks*2<=org.max_monthly_queries,429,'QUERY_QUOTA_EXCEEDED');
     requireThat(used.cost+used.reserved+estimatedCost<=org.monthly_budget_micros,429,'MONTHLY_BUDGET_EXCEEDED');
-    requireThat(!provider.demo||process.env.NODE_ENV==='test',403,'DEMO_PROVIDER_FORBIDDEN');
-    const run={id:runId,location_id:location.id,status:'QUEUED',provider:provider.id,is_demo:provider.demo,created_at:now(),
+    // Experimental Chrome observations are real but not commercially licensed.
+  // Synthetic providers remain forbidden outside tests.
+  requireThat(!provider.demo||process.env.NODE_ENV==='test',403,'DEMO_PROVIDER_FORBIDDEN');
+    const run={id:runId,location_id:location.id,status:'QUEUED',provider:provider.id,is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview',created_at:now(),
       estimated_cost:estimatedCost,actual_cost:0,completed_tasks:0,warning_tasks:0,actor_uid:c.principal.uid,actor_role:c.role,
       month,task_totals:{QUEUED:plannedTasks},config_snapshot:{plannedTasks,location,grid,terms,input,requestHash},
       cost_per_task:provider.maxCostMicros*2};
@@ -62,7 +64,7 @@ export async function dispatchAudit(store:Store,org:string,runId:string){
       surface:s.input.surface,language:s.input.language,device:s.input.device,lat:point.lat,lng:point.lng,
       depth:20,cid:s.location.cid,placeId:s.location.place_id,expectedName:s.location.name,point:point.sequence,algorithmVersion:'firebase-pair-v1'};
     pending.push(writer.create(store.ref(org,'tasks',taskId),{id:taskId,run_id:runId,location_id:run.location_id,
-      actor_uid:run.actor_uid,actor_role:run.actor_role,month:run.month,state:'QUEUED',reserved_cost:run.cost_per_task,query,created_at:now()}).catch(e=>{if(e.code!==6)throw e;}));
+      actor_uid:run.actor_uid,actor_role:run.actor_role,month:run.month,state:'QUEUED',provider:run.provider,is_experimental:run.is_experimental===true,reserved_cost:run.cost_per_task,query,created_at:now()}).catch(e=>{if(e.code!==6)throw e;}));
   }
   await writer.close();await Promise.all(pending);
   await store.db.runTransaction(async tx=>{
@@ -75,7 +77,10 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
   const ref=store.ref(org,'tasks',taskId),lease=id();
   const task=await store.db.runTransaction<Doc|null>(async tx=>{
     const s=await tx.get(ref);if(!s.exists||s.data()!.state!=='QUEUED')return null;
-    const t=s.data()!,o=await tx.get(store.org(org)),m=await tx.get(store.ref(org,'members',t.actor_uid)),u=await tx.get(store.db.doc('users/'+t.actor_uid));
+    const t=s.data()!;
+    // Triggers for one provider must never cancel or consume another provider's task.
+    if (t.provider !== provider.id) return null;
+    const o=await tx.get(store.org(org)),m=await tx.get(store.ref(org,'members',t.actor_uid)),u=await tx.get(store.db.doc('users/'+t.actor_uid));
     const allowed=provider.enabled&&o.data()?.entitlement_status==='ACTIVE'&&millis(o.data()?.paid_through)>Date.now()&&
       m.data()?.status==='ACTIVE'&&m.data()?.role===t.actor_role&&u.exists&&!u.data()?.disabled;
     tx.update(ref,{state:allowed?'RUNNING':'CANCELLED',lease,started_at:now()});
@@ -97,7 +102,7 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
   }
   const actual=cost,accounted=uncertain?Math.max(task.reserved_cost,cost):cost;
   const observation={id:taskId,run_id:task.run_id,location_id:task.location_id,status,position,identity_match:identityMatch,
-    observed_at:Timestamp.fromDate(new Date(second?.observedAt??first?.observedAt??Date.now())),provider:provider.id,is_demo:provider.demo,
+    observed_at:Timestamp.fromDate(new Date(second?.observedAt??first?.observedAt??Date.now())),provider:provider.id,is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview',
     result_depth:task.query.depth,query_snapshot:task.query,parser_version:'firebase-pair-v1',created_at:now(),cost_micros:actual};
   await store.db.runTransaction(async tx=>{
     const current=await tx.get(ref);if(current.data()?.lease!==lease||!['RUNNING','CANCELLED'].includes(current.data()!.state))return;
@@ -108,7 +113,7 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
     const completed=r.completed_tasks+1,warnings=r.warning_tasks+Number(status!=='VERIFIED'),done=completed===r.config_snapshot.plannedTasks;
     tx.create(store.ref(org,'measurements',taskId),observation);
     tx.create(store.ref(org,'evidence',taskId),{query:task.query,first:first??null,second:second??null,
-      decision:{status,position,identityMatch},observed_at:observation.observed_at,cost_uncertain:uncertain});
+      decision:{status,position,identityMatch},observed_at:observation.observed_at,is_experimental:provider.id==='local_chrome_preview',cost_uncertain:uncertain});
     tx.update(ref,{state:'DONE',measurement_status:status,completed_at:now(),cost_micros:actual,cost_uncertain:uncertain});
     tx.update(runRef,{completed_tasks:completed,warning_tasks:warnings,actual_cost:r.actual_cost+actual,
       status:done?(warnings?'COMPLETED_WITH_WARNINGS':'COMPLETED'):'RUNNING',
@@ -123,7 +128,7 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
         if(seenCompetitors.has(competitorId))continue;seenCompetitors.add(competitorId);
         tx.create(store.ref(org,'competitors',competitorId),{
           location_id:task.location_id,measurement_id:taskId,...competitor,observed_at:observation.observed_at,source:provider.id,
-          retention_until:Timestamp.fromMillis(Date.now()+7*86400000),is_demo:provider.demo});
+          retention_until:Timestamp.fromMillis(Date.now()+7*86400000),is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview'});
       }
     }
   });
