@@ -185,7 +185,7 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
       const location={id:newId,name:hit?.name??b.name,city:hit?.city??b.city,address:hit?.address??b.address,
         maps_url:parsed.url,lat:hit?.lat??b.lat,lng:hit?.lng??b.lng,cid:hit?.cid??parsed.cid,place_id:hit?.placeId??parsed.placeId,
         primary_category:hit?.category??null,brand_id:b.brandId??null,identity_status:hit?'CONFIRMED':'UNRESOLVED',
-        source:hit?provider.id:'OPERATOR',created_at:now()};
+        source:hit?(process.env.RANK_QUEUE_MODE==='local_collector'?'local_chrome_preview':provider.id):'OPERATOR',created_at:now()};
       tx.create(store.ref(c.org,'locations',newId),location);
       tx.create(identityRef,{location_id:newId});
       tx.update(store.org(c.org),{'counts.locations':(org.counts?.locations??0)+1});
@@ -218,7 +218,7 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     requireThat(hits.length===1,409,'AMBIGUOUS_IDENTITY');const hit=hits[0];
     requireThat((!parsed.cid||parsed.cid===hit.cid)&&(!parsed.placeId||parsed.placeId===hit.placeId),409,'MAPS_IDENTITY_MISMATCH');
     const update={name:hit.name,address:hit.address,city:hit.city,lat:hit.lat,lng:hit.lng,cid:hit.cid,place_id:hit.placeId,
-      primary_category:hit.category??null,identity_status:'CONFIRMED',source:provider.id};
+      primary_category:hit.category??null,identity_status:'CONFIRMED',source:process.env.RANK_QUEUE_MODE==='local_collector'?'local_chrome_preview':provider.id};
     await store.mutate(c,async tx=>{tx.update(store.ref(c.org,'locations',l.id),update);});return {...l,...update};
   });
   route('GET','/v1/niches',async r=>{await context(r,writers);return listNiches();});
@@ -296,7 +296,8 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     const c=await context(r);requireThat(c.org===r.params.orgId,403,'TENANT_ACCESS_DENIED');
     const units=[];for(const l of await store.list(c.org,'locations')){if(c.role==='client_viewer'&&!c.member.location_ids.includes(l.id))continue;
       units.push({id:l.id,name:l.name,brand_id:l.brand_id,brand:null,...(await rankings(c,l.id)).summary});}
-    return {units,provider:provider.enabled?provider.id:'disabled',providerEnabled:provider.enabled,isDemo:false};
+    const active=await auditProvider(c.org);
+    return {units,provider:active.enabled?active.id:'disabled',providerEnabled:active.enabled,isDemo:active.demo};
   });
   route('GET','/v1/locations/:id/competitors',async r=>{
     const c=await context(r);await store.location(c,r.params.id);return byDate(await store.list(c.org,'competitors',r.params.id),'observed_at').filter(x=>millis(x.retention_until)>Date.now());
