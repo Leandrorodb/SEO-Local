@@ -1,5 +1,21 @@
 # Firebase — estado verificável
 
+Atualização em 17/11/2026: `npm run typecheck` e `npm run build:firebase`
+passaram. Quatro testes de precisão e um teste de integração Auth/Firestore
+nos emuladores passaram. O fluxo usa capturas SINTÉTICAS e segundo fator
+injetado somente na dependência de teste: não comprova ranking ou MFA reais.
+O backend em `apps/firebase/` é um protótipo de migração, NÃO foi publicado.
+Google Authentication foi configurado, mas não existe fluxo MFA completo.
+O plano permanece Spark; nenhuma fonte de posições real foi configurada.
+Consulte `PROMPT_CONTINUIDADE_ANTIGRAVITY.md` para continuar sem confundir
+o site de acompanhamento com uma implantação operacional.
+
+`firebase.json` aponta para as futuras Functions; `firebase.review.json` é
+a configuração publicada de acompanhamento. Esta responde JSON explícito
+de backend indisponível em vez de devolver HTML nas rotas da API.
+As regras Firestore negam acesso direto do cliente. A autorização da API
+Admin SDK, os índices, agendamentos e reconciliação ainda precisam de revisão.
+
 Projeto: `seo-local-64b17`. Site: https://seo-local-64b17.web.app.
 
 A publicação inicial é uma versão de acompanhamento da interface, explicitamente

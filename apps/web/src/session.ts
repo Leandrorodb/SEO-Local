@@ -1,4 +1,5 @@
 import { UserManager, WebStorageStateStore, InMemoryWebStorage } from 'oidc-client-ts';
+import { firebaseIdentity, currentFirebaseToken } from './firebase-auth';
 import {
   formatAuthFetchError,
   isNetworkFetchError,
@@ -8,10 +9,11 @@ import {
 const authority = import.meta.env.VITE_OIDC_AUTHORITY,
   client = import.meta.env.VITE_OIDC_CLIENT_ID;
 const oidcValidation = validateOidcConfig(authority, client);
-export const identityConfigured = oidcValidation.configured;
-export const identityIssue = oidcValidation.issue;
-export const oidcAuthority = authority?.trim() ?? '';
-export const identity = identityConfigured
+const legacyTestAuth = import.meta.env.VITE_AUTH_MODE === 'oidc-test';
+export const identityConfigured = !legacyTestAuth || oidcValidation.configured;
+export const identityIssue = legacyTestAuth ? oidcValidation.issue : null;
+export const oidcAuthority = legacyTestAuth ? authority?.trim() ?? '' : 'Firebase Authentication';
+export const identity = !legacyTestAuth ? firebaseIdentity : oidcValidation.configured
   ? new UserManager({
       authority: oidcAuthority,
       client_id: client!.trim(),
@@ -79,6 +81,7 @@ const messages: Record<string, string> = {
   MANUAL_COORDINATES_MISMATCH: 'As coordenadas informadas estão distantes da localização exata indicada no link do Maps.',
 
   INTERNAL_ERROR: 'O servidor encontrou um erro ao processar a solicitação. Consulte o registro da API.',
+  BACKEND_NOT_DEPLOYED: 'Login Firebase conectado. O backend de dados ainda não foi publicado; cadastro e medições estão indisponíveis nesta versão de acompanhamento.',
 };
 export const authErrorText = (e: unknown) =>
   formatAuthFetchError(e, oidcAuthority, location.origin) ?? errorText(e);
@@ -99,6 +102,7 @@ export async function api<T>(
   method = body === undefined ? 'GET' : 'POST',
   key?: string,
 ): Promise<T> {
+  if (!legacyTestAuth) bearer = await currentFirebaseToken();
   const response = await fetch('/v1' + url, {
     method,
     headers: {
@@ -113,9 +117,14 @@ export async function api<T>(
     const value = await response.json().catch(() => ({ error: { code: 'NETWORK_ERROR' } }));
     throw new ApiError(response.status, value.error?.code ?? 'REQUEST_FAILED', value.error?.requestId);
   }
-  return (await response.json()).data;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) throw new ApiError(503,'BACKEND_NOT_DEPLOYED');
+  const value = await response.json();
+  if (value.error) throw new ApiError(503,value.error.code ?? 'BACKEND_NOT_DEPLOYED');
+  return value.data;
 }
 export async function downloadPdf(id: string, org: string) {
+  if (!legacyTestAuth) bearer = await currentFirebaseToken();
   const response = await fetch('/v1/reports/' + id + '/pdf', {
     headers: { Authorization: 'Bearer ' + bearer, 'X-Organization-Id': org },
   });

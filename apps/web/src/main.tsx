@@ -327,7 +327,7 @@ function App() {
             <button className="primary" onClick={() => void login()}>
               {import.meta.env.VITE_LOCAL_EASY_LOGIN === 'LOCAL_MACHINE_ONLY'
                 ? 'Entrar neste computador →'
-                : 'Entrar com segurança →'}
+                : 'Entrar com Google →'}
             </button>
           ) : (
             <div className="notice" role="status">
@@ -418,7 +418,7 @@ function App() {
           <small>
             {import.meta.env.VITE_LOCAL_EASY_LOGIN === 'LOCAL_MACHINE_ONLY'
               ? 'Homologação local: acesso de dispositivo, sem MFA real. Não publicar na internet.'
-              : 'MFA obrigatório para administradores.'}
+              : 'Login protegido pelo Firebase Authentication.'}
             <br />
             Seu acesso e sua licença são validados no servidor.
           </small>
@@ -616,11 +616,11 @@ function App() {
             {!signed && previewMode && (
               <div className="preview-banner">
                 <div className="preview-banner-text">
-                  <strong>Ambiente de Visualização de Desenvolvimento · Google AI Studio</strong>
+                  <strong>Ambiente de acompanhamento · Firebase</strong>
                   <p>
                     Layout e telas interativas liberadas com estados vazios verdadeiros. Nenhuma
                     empresa, posição ou métrica é inventada; operações protegidas continuam
-                    exigindo Neon PostgreSQL e OIDC.
+                    exigindo Firebase Authentication e Cloud Firestore.
                   </p>
                 </div>
                 <div className="preview-banner-actions">
@@ -909,7 +909,7 @@ function Overview() {
       <div className="two-columns">
         <Panel
           title="Prontidão de Infraestrutura"
-          subtitle="Estado real da API, banco PostgreSQL Neon, OIDC e provedor de coleta."
+          subtitle="Estado real da API, banco Cloud Firestore, OIDC e provedor de coleta."
           action={
             <button type="button" onClick={() => navigate('/settings')}>
               Configurações

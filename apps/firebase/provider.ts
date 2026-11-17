@@ -12,7 +12,7 @@ export type Capture = { observedAt: string; taskRef: string; depth: number; comp
   items: { name: string; cid: string | null; placeId: string | null; position: number; sponsored: boolean }[];
   evidence: { source: string; checkUrl?: string; responseHash: string } };
 export interface CloudProvider {
-  id: string; enabled: boolean; maxCostMicros: number;
+  id: string; enabled: boolean; demo: boolean; maxCostMicros: number;
   resolve(url: string): Promise<Candidate[]>;
   measure(query: RankQuery, taskId: string): Promise<Capture>;
 }
@@ -34,12 +34,13 @@ export function verifyPair(query: RankQuery, first: Capture, second: Capture) {
     return { position: hit.position, prefix: prefix.map(x => ({ cid: x.cid, placeId: x.placeId, name: clean(x.name) })) };
   }
   const a = check(first), b = check(second);
-  const verified = a && b && a.position === b.position && digest(a.prefix) === digest(b.prefix);
+  const verified = first.taskRef !== second.taskRef && a && b && a.position === b.position && digest(a.prefix) === digest(b.prefix);
   return { status: verified ? 'VERIFIED' : 'REVIEW', position: verified ? a.position : null,
     identityMatch: verified ? query.cid ? 'cid:' + query.cid : 'place:' + query.placeId : null };
 }
 export class DataForSeoProvider implements CloudProvider {
   id = 'dataforseo';
+  demo = false;
   enabled: boolean;
   // Two independent live captures per point; estimate configured explicitly by
   // the operator from their provider contract, never a hard-coded price promise.
@@ -80,12 +81,12 @@ export class DataForSeoProvider implements CloudProvider {
       location_coordinate: `${q.lat},${q.lng},15z`, depth: q.depth, device: q.device, tag: taskId,
     });
     requireThat(Array.isArray(result.items), 502, 'INVALID_PROVIDER_RESULT');
-    const items = result.items.filter((x: any) => x.type === 'maps_search' || x.type === 'paid').map((x: any) => ({
+    const items = result.items.filter((x: any) => x.type === 'maps_search' || x.type === 'maps_paid_item').map((x: any) => ({
       name: String(x.title ?? ''), cid: x.cid ?? null, placeId: x.place_id ?? null,
-      position: x.rank_group, sponsored: x.type === 'paid' || x.is_paid === true,
+      position: x.rank_group, sponsored: x.type === 'maps_paid_item' || x.is_paid === true,
     }));
     const observedAt = new Date(result.datetime).toISOString();
     return { observedAt, taskRef: task.id, depth: q.depth, complete: result.type === 'maps' && !result.spell,
-      costMicros, items, evidence: { source: this.id, checkUrl: result.check_url, responseHash } };
+      costMicros, items, evidence: { source: this.id, ...(typeof result.check_url==='string'?{checkUrl:result.check_url}:{}), responseHash } };
   }
 }

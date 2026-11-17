@@ -31,4 +31,5 @@ service-account*.json
 *-firebase-adminsdk-*.json
 functions/.env*
 !functions/.env.example
+functions/lib/
 

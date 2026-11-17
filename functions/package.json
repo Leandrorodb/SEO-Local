@@ -1,0 +1,22 @@
+{
+  "name": "seo-local-functions",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "24"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0",
+    "fastify": "^5.6.2",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/rate-limit": "^10.3.0",
+    "zod": "^4.1.12",
+    "pdfkit": "^0.17.2",
+    "jose": "^6.1.0",
+    "pg": "^8.16.3",
+    "drizzle-orm": "0.45.4",
+    "pngjs": "7.0.0"
+  }
+}

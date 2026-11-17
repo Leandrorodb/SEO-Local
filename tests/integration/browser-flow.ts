@@ -130,6 +130,7 @@ export async function browserFlow(
   const vite = await createViteServer({
     configFile: path.resolve('apps/web/vite.config.ts'),
     define: {
+      'import.meta.env.VITE_AUTH_MODE': JSON.stringify('oidc-test'),
       'import.meta.env.VITE_OIDC_AUTHORITY': JSON.stringify(issuer),
       'import.meta.env.VITE_OIDC_CLIENT_ID': JSON.stringify('lrt'),
     },

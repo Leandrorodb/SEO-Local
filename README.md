@@ -1,3 +1,11 @@
+# SEO-Local — migração Firebase em andamento
+
+**17/11/2026:** interface hospedada para acompanhamento; backend Firebase e
+medição real ainda não publicados. Leia o [estado atual](docs/FIREBASE_STATUS.md)
+e o [prompt de continuidade](docs/PROMPT_CONTINUIDADE_ANTIGRAVITY.md).
+
+Site: https://seo-local-64b17.web.app. A documentação abaixo descreve o legado.
+
 # V4.7 — Correção de identificação Google Maps e cadastro assistido
 
 **Instalação ou atualização no Windows:** leia [`LEIA_PRIMEIRO_V4_7.md`](LEIA_PRIMEIRO_V4_7.md). Para atualizar sobre a instalação anterior, copie os arquivos para a mesma pasta (preserve `work/` e `.env`) e execute `ATUALIZAR_E_REABRIR.cmd`.
