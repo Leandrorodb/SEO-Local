@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorText } from './session';
+import { lookupMapsWithCollector } from './maps-lookup';
 import { useWorkspace, PageTitle } from './main';
 import { Badge, Empty, Panel } from '../../../packages/ui/index';
 import type { Grid, Keyword, Location, Ranking } from './types';
@@ -58,6 +59,7 @@ export function QuickMeasure() {
   const [newCompany, setNewCompany] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [lookupNotice, setLookupNotice] = useState('');
+  const [lookupRequestId, setLookupRequestId] = useState('');
   const [manualOpen, setManualOpen] = useState(false);
   const [manual, setManual] = useState({ name: '', city: '', address: '', lat: '', lng: '' });
   const [attested, setAttested] = useState(false);
@@ -143,12 +145,10 @@ export function QuickMeasure() {
     setCandidates([]);
     setCandidate(null);
     setLookupNotice('');
-    const response = await run(() => api<{ status: string; missing?: string[];
-      partial?: Partial<Pick<Candidate, 'name' | 'city' | 'address' | 'lat' | 'lng'>>;
-      candidates: Candidate[] }>(
-      '/locations/resolve', w.org, { mapsUrl: mapsUrl.trim() },
-    ));
+    setLookupRequestId('');
+    const response = await run(() => lookupMapsWithCollector<Candidate>(w.org, mapsUrl.trim()));
     if (!response) return;
+    setLookupRequestId(response.requestId ?? '');
     setCandidates(response.candidates);
     if (response.partial) setManual((previous) => ({
       name: response.partial?.name ?? previous.name,
@@ -202,7 +202,8 @@ export function QuickMeasure() {
     // after an error.
     const result = await run(() => api<{ location: Location; created: boolean }>(
       '/locations/register-confirmed', w.org,
-      { mapsUrl: mapsUrl.trim(), externalId: candidate.cid ?? candidate.placeId },
+      { mapsUrl: mapsUrl.trim(), externalId: candidate.cid ?? candidate.placeId,
+        ...(lookupRequestId ? { resolveRequestId:lookupRequestId } : {}) },
     ), 'Identidade da ficha confirmada.');
     if (!result) return;
     setNewCompany(false);
@@ -216,15 +217,15 @@ export function QuickMeasure() {
   async function resolveExisting() {
     if (!selected) return;
     setMapsUrl(selected.maps_url);
-    const response = await run(() => api<{ status: string; candidates: Candidate[] }>(
-      '/locations/resolve', w.org, { mapsUrl: selected.maps_url },
-    ));
+    const response = await run(() => lookupMapsWithCollector<Candidate>(w.org, selected.maps_url));
     if (!response) return;
+    setLookupRequestId(response.requestId ?? '');
     setCandidates(response.candidates);
     if (response.candidates.length === 1) {
       const entry = response.candidates[0];
       const confirmed = await run(() => api<Location>(`/locations/${selected.id}/confirm`, w.org, {
         externalId: entry.cid ?? entry.placeId,
+        ...(response.requestId ? { resolveRequestId:response.requestId } : {}),
       }), 'Identidade confirmada no servidor.');
       if (confirmed) setLookupNotice('Identidade da ficha confirmada.');
     } else {
@@ -237,6 +238,7 @@ export function QuickMeasure() {
     if (!selected) return;
     const confirmed = await run(() => api<Location>(`/locations/${selected.id}/confirm`, w.org, {
       externalId: entry.cid ?? entry.placeId,
+      ...(lookupRequestId ? { resolveRequestId:lookupRequestId } : {}),
     }), 'Identidade da unidade confirmada.');
     if (confirmed) { setCandidates([]); setLookupNotice('Identidade confirmada.'); }
   }
@@ -312,7 +314,7 @@ export function QuickMeasure() {
       <strong>
         Motor de medição:{' '}
         {!w.signed
-          ? 'Aguardando PostgreSQL e autenticação OIDC'
+          ? 'Aguardando Firebase Authentication e API'
           : source.isLoading
             ? 'Verificando…'
             : source.data?.canMeasureMaps
@@ -321,7 +323,7 @@ export function QuickMeasure() {
       </strong>
       <small>
         {!w.signed
-          ? 'Modo Preview de Interface: nenhuma medição é simulada. Conecte o banco e entre via OIDC para consultar o provedor.'
+          ? 'Modo Preview de Interface: nenhuma medição é simulada. Entre com Firebase Authentication para consultar o provedor.'
           : source.data?.mode === 'LOCAL_EXPERIMENTAL'
             ? 'Chrome local experimental · sem API paga · depende do PC ligado; resultados podem ser inconclusivos.'
             : source.data?.reason === 'PROVIDER_NOT_CONFIGURED'
@@ -362,7 +364,7 @@ export function QuickMeasure() {
           <button disabled={busy} onClick={() => void resolveExisting()}>Conferir identidade no Maps</button>}
       </div> : <div className="quick-new-company">
         <label>Link da ficha do Google Maps
-          <input type="url" value={mapsUrl} onChange={(e) => { setMapsUrl(e.target.value); setCandidates([]); setCandidate(null); }}
+          <input type="url" value={mapsUrl} onChange={(e) => { setMapsUrl(e.target.value); setCandidates([]); setCandidate(null); setLookupRequestId(''); }}
             placeholder="https://www.google.com/maps/place/..." />
         </label>
         <button disabled={busy || !mapsUrl.trim() || !source.data?.canResolve} onClick={() => void lookupMaps()}>Identificar empresa pelo link</button>
