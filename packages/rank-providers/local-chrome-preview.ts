@@ -212,6 +212,7 @@ export class LocalChromePreviewProvider implements RankProvider {
     launched.on('close', () => { if (this.context === launched) this.context = null; });
     this.context = launched;
     await launched.grantPermissions(['geolocation'], { origin: 'https://www.google.com' });
+    await launched.addInitScript('if (typeof globalThis.__name === "undefined") { globalThis.__name = (f) => f; window.__name = (f) => f; }');
     return launched;
   }
 
@@ -458,6 +459,7 @@ export class LocalChromePreviewProvider implements RankProvider {
         query: { term: query.term, surface: query.surface, lat: query.lat, lng: query.lng },
         ...failed,
         errorType: e instanceof Error ? e.name : 'UnknownError',
+        errorMessage: e instanceof Error ? e.message : String(e),
       }, null, 2)).catch(() => {});
       return failed;
     } finally {
