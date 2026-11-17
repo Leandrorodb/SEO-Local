@@ -16,6 +16,7 @@ import { compareHistory, feedbackText, pdfBytes } from '../api/analytics.js';
 import { alertRules, signals } from '../api/signals.js';
 import { registerFirebaseOwner } from './owner.js';
 import { createAudit, dispatchAudit } from './worker.js';
+import { localQueueProvider } from './queue-provider.js';
 
 export type FirebaseApiOptions = { store: Store; auth: Auth; provider?: CloudProvider; logging?: boolean };
 type Request = FastifyRequest<{ Params: Record<string, string> }>;
@@ -31,6 +32,9 @@ const sorted = (rows: Doc[]) => rows.sort((a,b) => String(a.term ?? a.name).loca
 export function buildFirebaseApp(options: FirebaseApiOptions) {
   const { store, auth } = options;
   const provider: CloudProvider = options.provider ?? getCloudProvider();
+  // In Render the API enqueues only; Chrome is launched exclusively by a tenant-scoped local worker.
+  const auditProvider = async (org: string): Promise<CloudProvider> =>
+    (await localQueueProvider(store.db, org)) ?? provider;
   const app = Fastify({ logger: options.logging ?? false, bodyLimit: 200000, trustProxy: true });
   app.register(cors, {
     origin: (origin, cb) => {
@@ -99,10 +103,13 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     return {organizations,owner:p.owner,mfa:p.mfa,email:p.email,uid:p.uid};
   });
   route('GET','/v1/provider/status', async r => {
-    await context(r);
-    return {enabled:provider.enabled,provider:provider.enabled?provider.id:'disabled',mode:'COMMERCIAL',
-      canResolve:provider.enabled,canMeasureMaps:provider.enabled,noPaidApi:false,
-      reason:provider.enabled?null:'PROVIDER_NOT_CONFIGURED'};
+    const c = await context(r);
+    const active = await auditProvider(c.org);
+    const local = active.id === 'local_chrome_preview';
+    return {enabled:active.enabled,provider:active.enabled?active.id:'disabled',
+      mode:local?'LOCAL_EXPERIMENTAL':'COMMERCIAL',
+      canResolve:active.enabled && !local,canMeasureMaps:active.enabled,
+      noPaidApi:local,reason:active.enabled?null:'PROVIDER_NOT_CONFIGURED'};
   });
   route('GET','/v1/brands',async r => {const c=await context(r);return sorted(await store.list(c.org,'brands'));});
   route('POST','/v1/brands',async r => {
@@ -220,7 +227,9 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     await store.mutate(c,async tx=>{tx.create(store.ref(c.org,'grids',row.id),row);});return row;
   });
   route('POST','/v1/locations/:id/audits',async(r,reply)=>{
-    const c=await context(r,writers),b=auditInput.parse(r.body),result=await createAudit(store,c,r.params.id,b,provider,String(r.headers['idempotency-key']??''));
+    const c=await context(r,writers),b=auditInput.parse(r.body);
+    const source = await auditProvider(c.org);
+    const result=await createAudit(store,c,r.params.id,b,source,String(r.headers['idempotency-key']??''));
     if(!b.dryRun) {
       reply.code(201);
       if ('runId' in result && !('replayed' in result && result.replayed)) {
