@@ -18,6 +18,13 @@ Admin SDK, os índices, agendamentos e reconciliação ainda precisam de revisã
 
 Projeto: `seo-local-64b17`. Site: https://seo-local-64b17.web.app.
 
+Tentativa de deploy de Functions em 17/11/2026: compilação passou, mas o
+Firebase bloqueou a implantação porque o projeto não está no plano Blaze.
+A API Artifact Registry não pôde ser habilitada sem upgrade. Consulta direta
+à API Cloud Billing confirmou `billingEnabled: false`. Backend não publicado;
+Hosting de acompanhamento preservado. Nenhuma conta de cobrança foi vinculada.
+Console: https://console.firebase.google.com/project/seo-local-64b17/usage/details.
+
 A publicação inicial é uma versão de acompanhamento da interface, explicitamente
 sem sessão ou dados de clientes. Ainda não permite cadastrar ou medir empresas.
 Para reproduzir o build: `node infra/build-review.mjs`.
