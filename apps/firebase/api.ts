@@ -88,8 +88,13 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
       api:{ready:connected,mode:'fastify'}, database:{configured:true,connected,roleVerified:true,schemaReady:connected,
         message:connected?'Cloud Firestore conectado.':'Cloud Firestore indisponível.'},
       oidc:{configured:true,message:'Firebase Authentication'},
-      worker:{provider:provider.enabled?provider.id:'disabled',mode:provider.enabled?'cloud':'disabled',
-        message:provider.enabled?'Duas capturas independentes por medição.':'Provedor real de ranking ainda não configurado.'},missing:connected?[]:['FIRESTORE_CONNECTION'] };
+      worker:{provider:provider.enabled?provider.id:'disabled',
+        mode:provider.enabled?'cloud':process.env.RANK_QUEUE_MODE==='local_collector'?'local_queue':'disabled',
+        message:provider.enabled?'Duas capturas independentes por medição.':
+          process.env.RANK_QUEUE_MODE==='local_collector'
+          ?'Fila preparada. Disponibilidade do coletor é verificada por organização autenticada.'
+          :'Provedor real de ranking ainda não configurado.'},
+      missing:connected?[]:['FIRESTORE_CONNECTION'] };
   });
   route('GET','/v1/me/organizations',async r => {
     const p = await principal(r);
@@ -325,7 +330,7 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
     requireThat(run.location_id===l.id&&String(run.status).startsWith('COMPLETED'),409,'RUN_NOT_COMPLETED');
     const rows=(await store.list(c.org,'measurements',l.id)).filter(m=>m.run_id===run.id);requireThat(rows.length,409,'NO_MEASUREMENTS');
     const branding=(await store.ref(c.org,'settings','branding').get()).data();
-    const content={agency:branding?.displayName??null,logoBase64:branding?.logoBase64??null,name:l.name,city:l.city,isDemo:run.is_demo,provider:run.provider,rows:wire(rows),runId:run.id,version:'firebase-rank-proof-v1'};
+    const content={agency:branding?.displayName??null,logoBase64:branding?.logoBase64??null,name:l.name,city:l.city,isDemo:run.is_demo,isExperimental:run.is_experimental===true,provider:run.provider,rows:wire(rows),runId:run.id,version:'firebase-rank-proof-v1'};
     const row={id:id(),location_id:l.id,run_id:run.id,content_json:content,hash:digest(content),state:'DRAFT',created_at:now()};
     await store.mutate(c,async tx=>{tx.create(store.ref(c.org,'reports',row.id),row);});return row;
   });
