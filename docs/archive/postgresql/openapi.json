@@ -398,6 +398,146 @@
         }
       }
     },
+    "/v1/locations/register-attested": {
+      "post": {
+        "operationId": "post_v1_locations_register_attested",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Organization-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful data envelope with requestId"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Queued"
+          },
+          "401": {
+            "description": "Invalid identity"
+          },
+          "402": {
+            "description": "Suspended license or budget exceeded"
+          },
+          "403": {
+            "description": "Membership/role/MFA denied"
+          },
+          "404": {
+            "description": "Resource not in authorized scope"
+          },
+          "409": {
+            "description": "Conflict, stale version or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Quota or request rate exceeded"
+          },
+          "503": {
+            "description": "External integration disabled/unavailable"
+          }
+        }
+      }
+    },
+    "/v1/locations/register-confirmed": {
+      "post": {
+        "operationId": "post_v1_locations_register_confirmed",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Organization-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "mapsUrl": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240
+                  }
+                },
+                "required": [
+                  "mapsUrl",
+                  "externalId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful data envelope with requestId"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Queued"
+          },
+          "401": {
+            "description": "Invalid identity"
+          },
+          "402": {
+            "description": "Suspended license or budget exceeded"
+          },
+          "403": {
+            "description": "Membership/role/MFA denied"
+          },
+          "404": {
+            "description": "Resource not in authorized scope"
+          },
+          "409": {
+            "description": "Conflict, stale version or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Quota or request rate exceeded"
+          },
+          "503": {
+            "description": "External integration disabled/unavailable"
+          }
+        }
+      }
+    },
     "/v1/locations/{id}/confirm": {
       "post": {
         "operationId": "post_v1_locations_id_confirm",
@@ -416,6 +556,62 @@
               "format": "uuid"
             }
           },
+          {
+            "name": "X-Organization-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful data envelope with requestId"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Queued"
+          },
+          "401": {
+            "description": "Invalid identity"
+          },
+          "402": {
+            "description": "Suspended license or budget exceeded"
+          },
+          "403": {
+            "description": "Membership/role/MFA denied"
+          },
+          "404": {
+            "description": "Resource not in authorized scope"
+          },
+          "409": {
+            "description": "Conflict, stale version or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Quota or request rate exceeded"
+          },
+          "503": {
+            "description": "External integration disabled/unavailable"
+          }
+        }
+      }
+    },
+    "/v1/provider/status": {
+      "get": {
+        "operationId": "get_v1_provider_status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
           {
             "name": "X-Organization-Id",
             "in": "header",
@@ -704,6 +900,71 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful data envelope with requestId"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "202": {
+            "description": "Queued"
+          },
+          "401": {
+            "description": "Invalid identity"
+          },
+          "402": {
+            "description": "Suspended license or budget exceeded"
+          },
+          "403": {
+            "description": "Membership/role/MFA denied"
+          },
+          "404": {
+            "description": "Resource not in authorized scope"
+          },
+          "409": {
+            "description": "Conflict, stale version or invalid transition"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "429": {
+            "description": "Quota or request rate exceeded"
+          },
+          "503": {
+            "description": "External integration disabled/unavailable"
+          }
+        }
+      }
+    },
+    "/v1/locations/{id}/keywords:activate-reviewed": {
+      "post": {
+        "operationId": "post_v1_locations_id_keywords_activate_reviewed",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Organization-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful data envelope with requestId"

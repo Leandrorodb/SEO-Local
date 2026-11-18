@@ -7,7 +7,7 @@ const needed = [
   'apps/worker/main.ts',
   'packages/db/migrate.ts',
   'packages/rank-providers/index.ts',
-  'docs/ENTREGA.md',
+  'docs/archive/postgresql/ENTREGA.md',
 ];
 const bad = needed.filter((p) => !existsSync(p));
 const forbidden = ['src/server/api.ts', 'src/db.js', 'local-data/nexus.sqlite', '.env'];

@@ -15,7 +15,8 @@ function IsSame($item) {
 # Parar banco com pg_ctl (graceful) antes de encerrar os wrappers.
 $dbStopOk = $true
 if ($items.postgres -and (IsSame $items.postgres)) {
-    $ctrl=Join-Path $root 'node_modules\.pnpm\@embedded-postgres+windows-x64@18.1.0-beta.16\node_modules\@embedded-postgres\windows-x64\native\bin\pg_ctl.exe'
+    $ctrl=Join-Path $root 'node_modules\@embedded-postgres\windows-x64\native\bin\pg_ctl.exe'
+    if (-not (Test-Path $ctrl)) { $ctrl=Join-Path $root 'node_modules\.pnpm\@embedded-postgres+windows-x64@18.1.0-beta.16\node_modules\@embedded-postgres\windows-x64\native\bin\pg_ctl.exe' }
     $data=Join-Path $root 'work\local-db\postgres'
     if ((Test-Path $ctrl) -and (Test-Path $data)) {
         & $ctrl -D $data -m fast -w stop

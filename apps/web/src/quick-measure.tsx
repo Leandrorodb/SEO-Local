@@ -318,7 +318,7 @@ export function QuickMeasure() {
           : source.isLoading
             ? 'Verificando…'
             : source.data?.canMeasureMaps
-              ? 'Configurado para teste local (Chrome ainda não verificado)'
+              ? source.data.mode === 'LOCAL_EXPERIMENTAL' ? 'Coletor local online' : 'Disponível'
               : 'Indisponível'}
       </strong>
       <small>

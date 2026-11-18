@@ -872,16 +872,24 @@ export function Results() {
   const w = useWorkspace(),
     [surface, setSurface] = useState('MAPS'),
     [kind, setKind] = useState('COMMERCIAL'),
+    [includeInactive, setIncludeInactive] = useState(false),
     [selected, setSelected] = useState('');
   const ranks = useQuery({
     queryKey: ['rankings', w.org, w.location],
     queryFn: () => api<Ranking>('/locations/' + w.location + '/rankings', w.org),
     enabled: w.signed && !!w.location,
   });
+  const keywords = useQuery({
+    queryKey: ['keywords', w.org, w.location],
+    queryFn: () => api<Keyword[]>(`/locations/${w.location}/keywords`, w.org),
+    enabled: w.signed && !!w.location,
+  });
+  const activeTerms = new Set(keywords.data?.filter(k=>k.status==='ACTIVE').map(k=>k.term.trim().toLocaleLowerCase('pt-BR')));
+  const isActive = (m:Rank) => activeTerms.has(m.query_snapshot.term.trim().toLocaleLowerCase('pt-BR'));
   const rows =
     ranks.data?.latest.filter(
-      (x) => x.query_snapshot.surface === surface && x.query_snapshot.kind === kind,
-    ) ?? [];
+      (x) => x.query_snapshot.surface === surface && x.query_snapshot.kind === kind && (includeInactive || isActive(x)),
+    ).sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)) ?? [];
   const row = rows.find((x) => x.id === selected) ?? rows[0];
   const comparable = (m: Rank) =>
     row &&
@@ -936,6 +944,7 @@ export function Results() {
               <option value="BRAND">Marca</option>
             </select>
           </label>
+          <label><input type="checkbox" checked={includeInactive} onChange={e=>setIncludeInactive(e.target.checked)} /> Incluir histórico de termos desativados</label>
         </div>
         {rows.length > 0 && <div className="actions">
           <button type="button" onClick={() => downloadRankingCsv(rows)}>
@@ -943,7 +952,7 @@ export function Results() {
           </button>
         </div>}
         <Panel title="Última observação de cada recorte">
-          <QueryState pending={ranks.isLoading} error={ranks.error}>
+          <QueryState pending={ranks.isLoading || keywords.isLoading} error={ranks.error || keywords.error}>
             {rows.length ? (
               <Table
                 headers={['Pesquisa', 'Ponto', 'Posição orgânica', 'Status', 'Fonte / momento', 'Histórico']}
@@ -953,6 +962,7 @@ export function Results() {
                     <td>
                       <strong>{m.query_snapshot.term}</strong>
                       <small>{m.query_snapshot.cluster}</small>
+                      {!isActive(m) && <Badge>Termo desativado</Badge>}
                     </td>
                     <td>
                       {m.query_snapshot.lat.toFixed(4)}, {m.query_snapshot.lng.toFixed(4)}
@@ -975,7 +985,7 @@ export function Results() {
               </Table>
             ) : (
               <Empty title="Nenhum resultado para este recorte">
-                Não há posições verificadas para mostrar.
+                Não há medições para os termos e filtros selecionados.
               </Empty>
             )}
           </QueryState>

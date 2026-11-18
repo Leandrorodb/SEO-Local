@@ -1,8 +1,3 @@
 @echo off
-setlocal
-cd /d "%~dp0"
-title Local Rank Tracker - Encerrar
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0infra\encerrar-local.ps1"
-echo.
-pause
-endlocal
+rem Compatibilidade com a instalacao PostgreSQL antiga. Preserva os dados.
+call "%~dp0scripts\windows\ENCERRAR_LOCAL_RANK_TRACKER.cmd"

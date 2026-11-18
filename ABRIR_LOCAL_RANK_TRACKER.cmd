@@ -1,3 +1,3 @@
 @echo off
-cd /d "%~dp0"
-call "%~dp0INICIAR_LOCAL_RANK_TRACKER.cmd"
+rem Sistema publicado. O coletor local e iniciado separadamente.
+start "" "https://seo-local-64b17.web.app"

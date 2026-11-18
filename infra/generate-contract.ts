@@ -12,10 +12,10 @@ const app = buildApp({
 try {
   await app.ready();
   await writeFile(
-    'docs/openapi.json',
+    'docs/archive/postgresql/openapi.json',
     JSON.stringify(app.getDecorator('openApiDocument'), null, 2),
   );
-  console.log('docs/openapi.json generated from registered routes; no database connection used.');
+  console.log('docs/archive/postgresql/openapi.json generated from registered routes; no database connection used.');
 } finally {
   await app.close();
   await pool.end();

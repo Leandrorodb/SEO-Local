@@ -5,15 +5,15 @@
 | Validação executada | Resultado |
 |---|---|
 | Instalação offline com lockfile congelado, TypeScript, Vite e build dos serviços Node | Aprovados |
-| Testes unitários, PostgreSQL, segurança, concorrência, API compilada e Chrome | **26 passaram, zero falhas, zero pulados** — [saída](evidence/saas.tap.txt) |
-| Regressão da aplicação original | **13 passaram** — [saída](evidence/legado.tap.txt) |
-| Dependências de produção | **Zero avisos reportados** na execução — [resultado](evidence/audit-prod.json) |
-| Cópia física após desligamento nativo; restauração em outro diretório e porta | **150 medições e 2 relatórios** sintéticos, mesmos IDs/hashes de relatórios, registros protegidos por RLS e histórico imutável — [evidência](evidence/restore.json) |
+| Testes unitários, PostgreSQL, segurança, concorrência, API compilada e Chrome | **26 passaram, zero falhas, zero pulados** — [saída](../../evidence/saas.tap.txt) |
+| Regressão da aplicação original | **13 passaram** — [saída](../../evidence/legado.tap.txt) |
+| Dependências de produção | **Zero avisos reportados** na execução — [resultado](../../evidence/audit-prod.json) |
+| Cópia física após desligamento nativo; restauração em outro diretório e porta | **150 medições e 2 relatórios** sintéticos, mesmos IDs/hashes de relatórios, registros protegidos por RLS e histórico imutável — [evidência](../../evidence/restore.json) |
 | Quatro workflows do GitHub e comandos Bash | YAML analisado e sintaxe Bash verificada; não executados em GitHub, Docker ou Google Cloud |
 
 ## O que foi demonstrado
 
-No Chrome, o teste concluiu login OIDC/PKCE com emissor de teste, cadastro via Maps, confirmação por identificador, colagem de **JSON GPT**, revisão e ativação dos termos, grade 5×5, prévia, processamento por worker, resultados, aprovação humana e download de [PDF sintético](evidence/DEMO-relatorio.pdf). A alternância de tema e a ausência de erros de página também foram verificadas. O teste das 1.000 consultas é **uma prévia de 40 termos × 25 pontos**, sem compra nem alegação de 1.000 medições reais. [Painel escuro](evidence/DEMO-dark.png) · [Painel claro](evidence/DEMO-light.png).
+No Chrome, o teste concluiu login OIDC/PKCE com emissor de teste, cadastro via Maps, confirmação por identificador, colagem de **JSON GPT**, revisão e ativação dos termos, grade 5×5, prévia, processamento por worker, resultados, aprovação humana e download de [PDF sintético](../../evidence/DEMO-relatorio.pdf). A alternância de tema e a ausência de erros de página também foram verificadas. O teste das 1.000 consultas é **uma prévia de 40 termos × 25 pontos**, sem compra nem alegação de 1.000 medições reais. [Painel escuro](../../evidence/DEMO-dark.png) · [Painel claro](../../evidence/DEMO-light.png).
 
 A API compilada serviu o frontend e negou acesso anônimo aos dados e acesso a arquivos privados. A suíte exercitou JWT adulterado, MFA insuficiente, revogação, organização e unidade alheias, custo/cota concorrentes, repetição de pagamento e job, suspensão e reativação. O worker rejeitou token de usuário, identidade de serviço incorreta e corpo com tenant forjado. Resultados sem identidade suficiente ficaram sem posição.
 
@@ -24,7 +24,7 @@ O consolidado usa as observações mais recentes por recorte, exclui termos de m
 - Baseline `43900e2`: [inventário do ZIP e lacunas](AUDIT-BASELINE.md).
 - Fundação `b53140d`: [migrations, servidor, licença e isolamento](ETAPA-1.md).
 - Interface e operação `5cfc2d1`: [arquivos, resultado dos 23 testes daquele ponto e pendências](ETAPA-2.md).
-- Etapa final: `apps/api/analytics.ts`, `signals.ts`, UI de resultados, gráficos e redes; migration `006_insights.sql`; testes de oportunidade, alertas, fronteira de tenant e JSON no navegador; encerramento nativo do PostgreSQL em `infra/test-postgres.ts`; promoção condicionada e documentação. O [inventário por etapa](evidence/arquivos.txt) lista cada caminho. O [OpenAPI](openapi.json) registra as rotas implementadas; os schemas de payload completos ficam nos validadores Zod e nas rotas.
+- Etapa final: `apps/api/analytics.ts`, `signals.ts`, UI de resultados, gráficos e redes; migration `006_insights.sql`; testes de oportunidade, alertas, fronteira de tenant e JSON no navegador; encerramento nativo do PostgreSQL em `infra/test-postgres.ts`; promoção condicionada e documentação. O [inventário por etapa](../../evidence/arquivos.txt) lista cada caminho. O [OpenAPI](openapi.json) registra as rotas implementadas; os schemas de payload completos ficam nos validadores Zod e nas rotas.
 
 ## Ativação da primeira auditoria
 

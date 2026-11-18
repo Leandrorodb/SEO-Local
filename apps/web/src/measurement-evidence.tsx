@@ -45,7 +45,7 @@ export function MeasurementEvidence({org,measurementId}:{org:string;measurementI
           <p>{Number.isFinite(Date.parse(capture.observedAt))?new Date(capture.observedAt).toLocaleString('pt-BR'):'Horário da fonte inválido'} · {capture.complete?'Leitura completa':'Leitura incompleta'}</p>
           <small>Referência: {capture.taskRef}</small>
           <p>{capture.items.filter(x=>x.sponsored).length} anúncio(s) separado(s) da lista orgânica.</p>
-          <ol style={{paddingLeft:24}}>{capture.items.filter(x=>!x.sponsored).slice().sort((a,b)=>a.position-b.position).map((item,i)=>{
+          <ol style={{paddingLeft:24,maxHeight:340,overflowY:'auto'}}>{capture.items.filter(x=>!x.sponsored).slice().sort((a,b)=>a.position-b.position).map((item,i)=>{
             const target=!!((proof.data!.query.cid&&item.cid===proof.data!.query.cid)||(proof.data!.query.placeId&&item.placeId===proof.data!.query.placeId));
             return <li key={i} value={item.position} style={{padding:'5px 0',fontWeight:target?700:400}}>{item.name}{target?' · ficha pesquisada':''}<small style={{display:'block'}}>CID/Place ID: {item.cid??item.placeId??'não identificado'}</small></li>;
           })}</ol>

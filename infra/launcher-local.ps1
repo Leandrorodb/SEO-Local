@@ -1,5 +1,5 @@
 # Local Rank Tracker - iniciador Windows local, sem services globais.
-# Nao publicar em producao. Requer Node 22.14+, pnpm e Windows PowerShell 5.1+.
+# Nao publicar em producao. Requer Node 24.12+, npm e Windows PowerShell 5.1+.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -33,7 +33,7 @@ function StartService([string]$key, [string]$task) {
     $out = Join-Path $work ($key + '-saida.log')
     $err = Join-Path $work ($key + '-erros.log')
     # Arquivos distintos exigidos pelo Start-Process. Reinicializacao limpa do log.
-    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/c',('pnpm.cmd ' + $task)) `
+    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/c',('npm.cmd run ' + $task)) `
         -WorkingDirectory $root -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput $out -RedirectStandardError $err
     $proc.Refresh()
@@ -85,16 +85,17 @@ function UpdateDatabaseEnvironment() {
     [System.IO.File]::WriteAllText($envFile, $content, [System.Text.UTF8Encoding]::new($false))
 }
 function AssertCommand([string]$name) {
-    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { Fail ('Nao encontrei ' + $name + ' no PATH. Instale o Node.js e habilite pnpm primeiro.') }
+    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { Fail ('Nao encontrei ' + $name + ' no PATH. Instale o Node.js e confira o npm primeiro.') }
 }
 
 try {
     Info 'Iniciando Local Rank Tracker no seu computador...'
     if (-not (Test-Path (Join-Path $root 'package.json'))) { Fail 'Coloque estes arquivos na pasta que contem package.json.' }
     AssertCommand 'node.exe'
-    AssertCommand 'pnpm.cmd'
+    AssertCommand 'npm.cmd'
     $major = [int]((& node.exe --version) -replace '^v(\d+)\..*$', '$1')
-    if ($major -lt 22) { Fail 'E necessario Node.js 22.14 ou superior.' }
+    $version = [version]((& node.exe --version) -replace '^v','')
+    if ($version -lt [version]'24.12.0') { Fail 'E necessario Node.js 24.12 ou superior.' }
     # Se o sistema estiver rodando, apenas abre o navegador (sem sobrescrever .env).
     $api = GetHttpJson 'http://127.0.0.1:4178/health'
     $idp = GetHttpJson 'http://127.0.0.1:4181/.well-known/openid-configuration'
@@ -122,7 +123,7 @@ try {
     }
     if (-not (Test-Path (Join-Path $root 'node_modules\.bin\tsx.cmd'))) {
         Info 'Primeira instalacao: baixando dependencias (necessita internet)...'
-        & pnpm.cmd install --frozen-lockfile
+        & npm.cmd ci
         if ($LASTEXITCODE -ne 0) { Fail 'Falha na instalacao das dependencias.' }
     }
 
@@ -144,7 +145,7 @@ try {
 
     UpdateDatabaseEnvironment
     Info 'Preparando login gratuito e privado de homologacao...'
-    & pnpm.cmd auth:local:setup
+    & npm.cmd run auth:local:setup
     if ($LASTEXITCODE -ne 0) { Fail 'Falha ao configurar o login local.' }
 
     # The local OIDC demo must run in development while provider is
@@ -168,7 +169,7 @@ try {
     # O pacote completo deve ser COMPILADO, nao executar uma interface de desenvolvimento.
     # VITE_* sao resolvidas no build: compilar somente depois de definir o login local.
     Info 'Compilando a aplicacao completa (React, API, worker e scripts)...'
-    & pnpm.cmd build
+    & npm.cmd run build
     if ($LASTEXITCODE -ne 0) { Fail 'O build falhou. Veja o erro acima; nenhum servico da aplicacao sera iniciado.' }
     if (-not (Test-Path (Join-Path $root 'apps\web\dist\index.html'))) {
         Fail 'O build terminou sem gerar apps/web/dist/index.html.'
@@ -178,11 +179,11 @@ try {
     }
 
     Info 'Preparando acesso e espaco de trabalho local...'
-    & pnpm.cmd owner:bootstrap
+    & npm.cmd run owner:bootstrap
     if ($LASTEXITCODE -ne 0) { Fail 'Falha ao criar o proprietario. Consulte o log de PostgreSQL.' }
-    & pnpm.cmd local:workspace
+    & npm.cmd run local:workspace
     if ($LASTEXITCODE -ne 0) { Fail 'Falha ao preparar o ambiente local de trabalho.' }
-    & pnpm.cmd preview:enable
+    & npm.cmd run preview:enable
     if ($LASTEXITCODE -ne 0) { Fail 'Falha ao ativar a medicao experimental local.' }
 
     $idpProc = StartService 'login' 'auth:local:serve'

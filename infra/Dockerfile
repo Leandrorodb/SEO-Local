@@ -1,8 +1,8 @@
-FROM node:22-bookworm-slim AS build
+# Legacy PostgreSQL API container. The hosted Firebase API uses build:render.
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
-RUN npm install --global pnpm@11.25.0
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
 COPY apps ./apps
 COPY packages ./packages
 COPY infra ./infra
@@ -13,15 +13,14 @@ ARG VITE_OIDC_AUTHORITY
 ARG VITE_OIDC_CLIENT_ID
 ENV VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY
 ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
-RUN pnpm build
+RUN npm run build
 
-FROM node:22-bookworm-slim AS runtime
+FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=8080
 WORKDIR /app
-RUN npm install --global pnpm@11.25.0
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/apps/web/dist ./apps/web/dist
 USER node

@@ -27,4 +27,6 @@ services:
       - key: RANK_QUEUE_MODE
         value: local_collector
       - key: RANK_GLOBAL_MONTHLY_BUDGET_MICROS
-        value: 10000000
+        value: 1
+      - key: ORGANIZATION_DEFAULT_BUDGET_MICROS
+        value: 0

@@ -1,71 +1,55 @@
-# SEO-Local — migração Firebase em andamento
+# SEO-Local · Local Rank Tracker
 
-**17/11/2026:** frontend Firebase e backend Render Free publicados, com conexão
-real ao Firestore. Login administrativo/MFA e fluxo completo em validação.
-Leia o [estado atual](docs/ESTADO_PUBLICACAO_ATUAL.md)
-e o [prompt de continuidade](docs/PROMPT_CONTINUIDADE_ANTIGRAVITY.md).
+Painel de SEO local para cadastrar fichas, revisar termos e medir posições orgânicas com evidências por ponto de pesquisa.
 
-Site: https://seo-local-64b17.web.app. A documentação abaixo descreve o legado.
+**Acessar:** [seo-local-64b17.web.app](https://seo-local-64b17.web.app) · [Saúde da API](https://seo-local-api-vh6q.onrender.com/health)
 
-# V4.7 — Correção de identificação Google Maps e cadastro assistido
+A versão atual usa **Firebase Hosting + Authentication + Firestore (Spark)** e **API Render Free**. Não precisa de Neon. O coletor Chrome experimental roda separadamente no computador autorizado; novas medições e identificação de fichas dependem dele. Render Free pode hibernar.
 
-**Instalação ou atualização no Windows:** leia [`LEIA_PRIMEIRO_V4_7.md`](LEIA_PRIMEIRO_V4_7.md). Para atualizar sobre a instalação anterior, copie os arquivos para a mesma pasta (preserve `work/` e `.env`) e execute `ATUALIZAR_E_REABRIR.cmd`.
+## Como usar
 
-A V4.7 corrige a aba `about:blank`, retira a navegação do escopo da transação PostgreSQL, apresenta diagnósticos e oferece cadastro local com dados conferidos pelo operador quando a página não fornece detalhes suficientes. Esse cadastro **não equivale a verificação independente pelo Google**. O motor Chrome permanece experimental e precisa ser validado no Windows. Consulte `RESULTADO_VALIDACAO_V4_7.txt`.
+1. Entre com Google e selecione a organização e a empresa.
+2. Em **Medir empresa**, confirme a ficha e revise termos que correspondem ao negócio.
+3. Com o coletor online, prepare uma auditoria em ponto único e inicie a medição.
+4. Confira **Resultados → Histórico → Conferir capturas e motivo da decisão**. Resultados divergentes ou incompletos ficam inconclusivos, sem posição publicada.
 
----
+O código adicional por aplicativo não é exigido para cadastro e medição neste piloto, por decisão do proprietário. Ações administrativas sensíveis mantêm proteção adicional.
 
-> **V4.4 — NOVO FLUXO NO PAINEL:** abra o menu **Medir empresa** para seguir cadastro → termos → auditoria → resultados em uma tela. Veja `ENTREGA_V4_4.md` para limitações e critérios de validação.
+No PC já configurado, `INICIAR_COLETOR.cmd` mantém o medidor conectado. Não abra uma segunda instância se o coletor já estiver online. Sem o PC ligado, o site continua acessível, mas não inicia novas capturas.
 
-# LOCAL RANK TRACKER V4.3 — ABRA COM DOIS CLIQUES
+## Critério de posição
 
-**PARA USAR NO WINDOWS:** extraia esta pasta e clique duas vezes em
-`ABRIR_LOCAL_RANK_TRACKER.cmd`. Ele prepara o ambiente, **executa o build real**,
-inicia PostgreSQL, login local, API compilada, worker compilado e a interface
-compilada em `http://127.0.0.1:5173/`. Ao fechar, use `ENCERRAR_LOCAL_RANK_TRACKER.cmd`.
+Uma posição só é confirmada quando duas capturas independentes concordam sobre a ficha (CID/Place ID e nome), a posição e toda a sequência orgânica anterior. Anúncios são separados; lacunas, duplicatas e capturas antigas impedem confirmação. O piloto é experimental e não garante posição estável nem primeiro lugar.
 
-**Leia [`LEIA_PRIMEIRO_V4_3.md`](LEIA_PRIMEIRO_V4_3.md)**. O texto abaixo é documentação
-histórica da arquitetura e execução manual; não é necessário digitar os comandos
-para abrir a versão local atual.
+## Desenvolver e validar
 
-**Estado verificado:** testes nativos de autenticação, medidor legado, gerador
-de termos e verificação do iniciador passaram. **Build completo e medição real
-não foram executados neste ambiente sem acesso ao npm**. O iniciador só abre
-a interface depois que o build passar no Windows.
+Node.js **24.12+**, npm e Chrome para o piloto. Java 21 para os emuladores Firebase.
 
----
-
-# Local Rank Tracker
-
-> **Piloto experimental gratuito (homologação local):** consulte [`COMECE_AQUI_WINDOWS.md`](COMECE_AQUI_WINDOWS.md). O motor comercial continua desabilitado por padrão.
-
-SaaS de SEO local com React, Fastify e PostgreSQL. O motor comercial vem **desligado**: cadastrar uma ficha e preparar a grade não gera nem compra rankings. Na homologação, o fluxo completo usa um fornecedor sintético restrito aos testes. O legado original está em `legacy/`, fora do site público.
-
-## Executar e verificar no Windows
-
-Requisitos: Node.js 22.14 ou superior, pnpm 11.25.0, Google Chrome para o teste local de navegador. Em CI, instalar o Chromium do Playwright. Usar um diretório privado; nunca publicar o ZIP de desenvolvimento como site estático.
-
-```powershell
-pnpm.cmd install --frozen-lockfile
-pnpm.cmd build
-pnpm.cmd test:legacy
-pnpm.cmd test
-pnpm.cmd audit --prod
+```sh
+npm ci
+npm run typecheck
+npm run build
+npm test
+npm run test:firebase
+npm audit --omit=dev --audit-level=high
 ```
 
-A suíte cria bancos PostgreSQL temporários em portas livres de loopback, inicia a API compilada em outra porta local e usa identidades e medições exclusivas de teste. A cópia restaurada e as evidências ficam em `work/`, fora do Git. O frontend não expõe código do servidor, scripts de migração ou os dados da pasta legacy.
+O teste Firebase usa Auth/Firestore emulados e capturas sintéticas identificadas. Não comprova ranking real. [Desenvolvimento e publicação](docs/DESENVOLVIMENTO.md).
 
-## Abrir uma instância local
+## Estrutura
 
-1. Na raiz, executar `pnpm.cmd db:local` e manter esse terminal aberto. Esse comando inicializa e migra o PostgreSQL local na porta 55432, sem clientes de exemplo.
-2. Copiar `.env.example` para `.env`; substituir as duas URLs do banco pelas de `work/local-db/database.env`. Manter ambos os arquivos privados. Em produção, entregar somente DATABASE_URL à API/worker; a credencial de migração é exclusiva da rotina administrativa.
-3. Configurar no IdP um cliente público OIDC com Authorization Code + PKCE, callback `http://localhost:5173/auth/callback` e MFA administrativo. Preencher issuer, JWKS HTTPS e audience; neste frontend a audiência do ID token é o client ID. Fornecer auth_time e amr ou ACR de MFA do IdP. Somente VITE_OIDC_AUTHORITY e VITE_OIDC_CLIENT_ID são configurações públicas; não usar prefixo VITE_ para segredo.
-4. Informar OWNER_SUBJECT e OWNER_EMAIL do titular verificado e executar `pnpm.cmd owner:bootstrap`. Para banco externo vazio, executar antes `pnpm.cmd db:migrate` com credencial administrativa. Não executar bootstrap para identidades não verificadas.
-5. Em terminais separados, executar `pnpm.cmd api`, `pnpm.cmd dev` e `pnpm.cmd worker`. Acessar **http://localhost:5173**. No console proprietário, cadastrar plano, usuários e organização; conferir limites e período pago antes de liberar o acesso. Não existe conta demo nem senha padrão.
-6. Para servir o frontend compilado na própria API, configurar callback e WEB_ORIGIN para essa origem e executar novamente o build depois de configurar o cliente OIDC. Ponto de entrada: `node --env-file=.env dist/apps/api/main.js`.
+| Pasta | Finalidade |
+| --- | --- |
+| `apps/firebase` | API, autorização, auditorias e fila Firestore atuais |
+| `apps/web` | Painel React |
+| `packages` | Contratos, domínio, componentes e provedores |
+| `infra` | Builds e execução do coletor; ferramentas do legado identificadas nos guias |
+| `tests` | Testes de precisão, segurança e integração |
+| `docs` | Operação atual, arquitetura e validações |
+| `scripts/windows` | Iniciadores da instalação PostgreSQL legada |
+| `docs/archive` | Entregas antigas e configurações descontinuadas |
+| `apps/api`, `apps/worker`, `legacy` | Implementação PostgreSQL e histórico preservados |
 
-## Documentação
+**Comece pela [documentação atual](docs/README.md).** O [estado publicado](docs/ESTADO_PUBLICACAO_ATUAL.md) distingue implantação de validação. Guias V3/V4 são históricos e não devem orientar a configuração Firebase.
 
-[Entrega, resultados e pendências](docs/ENTREGA.md) · [Operação e rollback](docs/OPERACAO.md) · [Auditoria do legado](docs/AUDIT-BASELINE.md) · [Especificação V3](docs/LOCAL_RANK_TRACKER_ESPECIFICACAO_V3.md) · [Decisões de arquitetura](docs/ADR-001.md) · [Etapa 1](docs/ETAPA-1.md) · [Etapa 2](docs/ETAPA-2.md) · [Contrato HTTP](docs/openapi.json).
-
-As regras de suspensão, revisão e limite de consultas são verificadas no servidor. A entrada de termos é por colagem; o PDF e o texto para WhatsApp só são liberados após aprovação humana. Custos são expressos em milionésimos de dólar; valores de teste não são preços comerciais.
+`package-lock.json` é o lockfile usado em desenvolvimento, CI, Render e Docker. Credenciais, `.env`, capturas privadas e dados de execução ficam fora do Git. Nunca copie chaves para o frontend ou para uma issue.

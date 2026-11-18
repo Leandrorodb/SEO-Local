@@ -1,58 +1,38 @@
-# Retomada autorizada em 18/11/2026
+# Continuidade — 18/11/2026
 
-O usuário retomou o trabalho em 18/11. As correções e a validação atual estão em
-[VALIDACAO_2026-11-18.md](VALIDACAO_2026-11-18.md). A lista abaixo registra o
-checkpoint anterior; a fila antiga já foi cancelada e os termos incorretos
-desativados, com o histórico preservado. Site e API permanecem publicados.
+O trabalho foi retomado pelo usuário. A medição real no site foi concluída e as
+duas capturas de cada uma das três pesquisas concordaram. Veja o
+[estado publicado](ESTADO_PUBLICACAO_ATUAL.md) para números, horário e limites.
 
-## Estado observado
+## Resolvido nesta retomada
 
-- Site Firebase e API Render Free online, Firestore conectado, login Google
-  do proprietário confirmado. Operações comuns dispensam TOTP por escolha
-  explícita do usuário; equipe/licenças/aprovação mantêm proteção adicional.
-- No site foi cadastrada Terremoto Moto Peças, CID `11472765297648071940`,
-  identificação real pelo coletor e confirmação via fila Firestore.
-- Uma auditoria de 23 termos foi iniciada pela interface durante a sessão:
-  `9ab49c5c-d535-4a84-a1c7-5eeb1a019a50`. Há resultados REVIEW/inconclusivos;
-  não foi comprovada uma posição numérica concordante pelo fluxo completo.
-- O coletor foi interrompido na pausa. A fila persistida não foi apagada.
-  Revisar tarefas RUNNING/interrompidas e as que ainda estão QUEUED antes de
-  reiniciar; não repetir capturas ou publicar posições sem prova.
+- Nicho específico para oficina de motos; não gerar termos de carros para essa categoria.
+- Fila antiga cancelada, reservas encerradas e 21 termos incorretos desativados.
+- Cancelamento pelo painel, recuperação de tarefas interrompidas e evidências legíveis.
+- Resultados priorizam termos ativos; o histórico desativado permanece acessível.
+- Correção da dependência que causava avisos de falha do GitHub e CI confirmado.
+- README e documentação atuais; guias e workflows antigos arquivados; npm unificado.
 
-## Prioridades da retomada
+## Próximas validações
 
-1. Corrigir o nicho automático: a categoria “Oficina mecânica de motos” foi
-   interpretada como oficina de carros. A tela mostrou termos como “mecânico
-   de carros” e “manutenção automotiva” para a motopeças. Não continuar a fila
-   desses termos sem revisão. A relevância deve respeitar nome, categoria e
-   serviços confirmados da empresa, sem inventar serviços.
-2. Validar precisão de posições com evidência real. Pilotos locais divergiram
-   4º/5º e 5º/2º, e corretamente retornaram `null`. Não escolher uma leitura,
-   diminuir rigor para obter números ou apresentar fixtures como dados reais.
-3. Corrigir e conferir os avisos por e-mail do GitHub. Causa confirmada:
-   `npm audit` encontrou `@grpc/grpc-js` vulnerável. Override para `^1.14.7`
-   e lockfile foram preparados e testados: 90 testes passaram e auditoria
-   retornou zero vulnerabilidades após instalação limpa. Conferir o resultado
-   do GitHub Actions no commit de checkpoint, sem desativar a auditoria.
-4. Organizar o repositório inteiro como o usuário solicitou: README atual,
-   documentação operacional clara, arquivo de versões legadas, redução de
-   duplicações e branches alinhadas. Preservar histórico, dados, secrets e
-   compatibilidade dos scripts ao mover arquivos. Ainda não foi executada a
-   reorganização completa.
+1. Repetir homologação com outras fichas e pontos, mantendo os casos divergentes inconclusivos.
+2. Validar geogrid e retomada após interrupção no computador real.
+3. Homologar relatórios e aprovação administrativa, sem criar credenciais pelo proprietário.
+4. Verificar e concluir os módulos de automação antes de anunciá-los como operacionais.
 
-## Cópias locais e infraestrutura
+Não diminuir o rigor para obter números, não inventar serviços e não apresentar
+fixtures como medições reais. Não ativar cobrança ou provedores pagos.
 
-- Trabalho revisado em `outputs/SEO-Local-deploy`, branch `codex/render-publicacao`.
-- `main` e `desenvolvimento-gemini` remotos foram alinhados. A cópia antiga
-  `outputs/SEO-Local` foi preservada: estava 27 commits atrás e continha uma
-  edição não commitada em `apps/firebase/api.ts` e o teste
-  `tests/firebase/terremoto-e2e.test.ts`. Esse teste usa dados fixos com rótulo
-  de “real”; revisar sua proveniência antes de incorporar. Não apagá-lo.
-- Render: `srv-dbuam6qfngtc73e8s60g`, workspace confirmado
-  `tea-dbuak759fdbs73e6fgf0`, plano Free, URL
-  https://seo-local-api-vh6q.onrender.com. Deploy operacional `0f8f665`.
-- Frontend: https://seo-local-64b17.web.app, build `0f8f665`.
-- Configuração privada fica em `work/` do workspace original, fora do Git.
-  Não imprimir arquivos `*-private.json` nem tokens de CLI.
-- `npm run collector:local` depende do PC autorizado ligado. Validar a fila
-  antes de ligar. Firebase permanece Spark; usuário não autoriza gastos.
+## Cópia de trabalho e infraestrutura
+
+Cópia atual: `outputs/SEO-Local-deploy`, branch `codex/render-publicacao`.
+`main` e `desenvolvimento-gemini` remotos são mantidos alinhados; o Render está
+configurado para esta última. A cópia anterior `outputs/SEO-Local` foi preservada
+com alterações locais e está desatualizada. Não a sobrescreva ou publique sem
+comparar o diff com a versão atual. Seu teste `terremoto-e2e.test.ts` usa fixtures
+rotuladas de reais e precisa de revisão antes de incorporar.
+
+Configuração privada em `work/` do workspace original, fora do Git. Nunca imprimir
+arquivos `*-private.json`, tokens ou conteúdos de `.env`. O coletor é iniciado
+por `npm run collector:local`; requer o PC autorizado ligado. Site Firebase e API
+Render permanecem publicados independentemente do processo de coleta.

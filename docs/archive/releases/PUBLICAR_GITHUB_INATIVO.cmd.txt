@@ -1,3 +1,4 @@
+REM HISTORICO INATIVO: pressupunha repositorio privado. Nao executar.
 @echo off
 setlocal EnableExtensions
 chcp 65001 >nul

@@ -40,7 +40,8 @@
     "server:firebase": "node --env-file-if-exists=.env --import tsx apps/firebase/server.ts",
     "worker:collector": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts",
     "worker:collector:once": "node --env-file-if-exists=.env --import tsx apps/firebase/collector-runner.ts --once",
-    "build:render": "tsx infra/build-render.ts"
+    "build:render": "tsx infra/build-render.ts",
+    "test:firebase": "npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-seo-local --config firebase.spark.json \"node --import tsx --test tests/firebase/api.test.ts\""
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",

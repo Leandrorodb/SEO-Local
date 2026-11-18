@@ -40,3 +40,21 @@ O coletor depende do computador autorizado ligado. Render Free pode hibernar.
 O piloto Chrome é experimental; publicar um número exige duas capturas
 independentes concordantes. Não há garantia de posição estável ou primeiro lugar.
 Nenhum recurso pago foi contratado.
+
+## Fluxo real concluído no site
+
+Auditoria `f2abc2c7-5c40-4dc4-88e6-5cab3bc0bed5`: três pesquisas, seis capturas
+reais. `moto peças` retornou 2º/2º; o nome da empresa, com e sem cidade, retornou
+1º/1º. Os três resultados ficaram VERIFIED. A tela de evidências exibiu os dois
+horários, identificadores e listas orgânicas correspondentes. Para a consulta
+comercial, ET2RODAS apareceu antes da Terremoto nas duas leituras.
+
+Os resultados se referem ao ponto da ficha e ao momento registrado no
+[estado publicado](ESTADO_PUBLICACAO_ATUAL.md). Não constituem garantia de
+posição para qualquer usuário ou medição futura.
+
+Na reorganização, 21 guias históricos saíram da raiz; configuração antiga de
+pnpm e workflows PostgreSQL ficaram arquivados e inativos. Scripts Windows
+legados passaram a usar npm e mantiveram a resolução da raiz do projeto.
+Os 94 testes principais, 13 testes legados e cinco verificações adicionais de
+iniciador/login passaram; a auditoria de produção retornou zero vulnerabilidades.

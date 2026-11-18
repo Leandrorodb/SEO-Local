@@ -7,7 +7,7 @@ const pkg = JSON.parse(read('package.json'));
 
 test('iniciador local usa o build completo e executa API, worker e interface compilados', () => {
   const launcher = read('infra/launcher-local.ps1');
-  assert.match(launcher, /pnpm\.cmd build/);
+  assert.match(launcher, /npm\.cmd run build/);
   assert.match(launcher, /StartService 'api' 'api:built'/);
   assert.match(launcher, /StartService 'worker' 'worker:built'/);
   assert.match(launcher, /StartService 'painel' 'preview:local'/);
@@ -27,7 +27,7 @@ test('preview compilada envia somente endpoints da API ao Fastify local', () => 
 
 test('pacote inclui iniciador e nao inclui secrets de um usuario', () => {
   for (const p of ['ABRIR_LOCAL_RANK_TRACKER.cmd', 'ENCERRAR_LOCAL_RANK_TRACKER.cmd',
-    'infra/local-postgres.ts', 'infra/local-oidc.mjs', 'pnpm-lock.yaml']) {
+    'infra/local-postgres.ts', 'infra/local-oidc.mjs', 'package-lock.json', 'scripts/windows/INICIAR_LOCAL_RANK_TRACKER.cmd']) {
     assert.equal(existsSync(new URL('../' + p, import.meta.url)), true, p);
   }
   assert.equal(existsSync(new URL('../.env', import.meta.url)), false);
