@@ -1,5 +1,6 @@
 import { LocalChromePreviewProvider, localPreviewEnabled } from './local-chrome-preview.js';
 import type { RankQuery } from '../contracts/index.js';
+import type {MapsCaptureContext} from './maps-context.js';
 import { AppError, requireThat } from '../domain/errors.js';
 export type ProviderResult = {
   observedAt: string;
@@ -7,6 +8,7 @@ export type ProviderResult = {
   depth: number;
   complete: boolean;
   costMicros: number;
+  mapsContext?: MapsCaptureContext;
   items: { cid?: string; placeId?: string; name: string; position: number; sponsored?: boolean }[];
   failure?: 'ERROR' | 'BLOCKED' | 'PROVIDER_UNAVAILABLE' | 'UNSUPPORTED_SURFACE';
 };

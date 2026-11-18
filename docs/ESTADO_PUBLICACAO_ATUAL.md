@@ -1,5 +1,12 @@
 # Publicação e validação — 18/11/2026
 
+**Precisão:** a comparação manual revelou áreas diferentes e reutilização de
+sessão no coletor. A correção registra o contexto observado e exige sessões
+isoladas. No teste local corrigido, `moto peças Varginha` retornou 5º/5º na área
+fixa, coincidindo com a conferência manual. Os números históricos abaixo não
+foram recalculados nem transferidos para essa consulta.
+[Evidências e limites](VALIDACAO_POSICOES.md).
+
 **Atualização dos termos:** o usuário esclareceu que precisa de consultas com
 a cidade da ficha, como `motopeças Varginha`, porque pesquisa de outra localidade.
 O gerador agora inclui a cidade em todas as sugestões. Para motopeças, separa

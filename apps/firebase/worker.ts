@@ -62,7 +62,8 @@ export async function dispatchAudit(store:Store,org:string,runId:string){
     const taskId=digest({runId,term:term.id,point:point.sequence});
     const query:RankQuery={term:term.term,keywordId:term.id,kind:term.kind,cluster:term.cluster,
       surface:s.input.surface,language:s.input.language,device:s.input.device,lat:point.lat,lng:point.lng,
-      depth:20,cid:s.location.cid,placeId:s.location.place_id,expectedName:s.location.name,point:point.sequence,algorithmVersion:'firebase-pair-v1'};
+      depth:20,cid:s.location.cid,placeId:s.location.place_id,expectedName:s.location.name,point:point.sequence,
+      algorithmVersion:run.provider==='local_chrome_preview'?'firebase-pair-v2-context':'firebase-pair-v1'};
     pending.push(writer.create(store.ref(org,'tasks',taskId),{id:taskId,run_id:runId,location_id:run.location_id,
       actor_uid:run.actor_uid,actor_role:run.actor_role,month:run.month,state:'QUEUED',provider:run.provider,is_experimental:run.is_experimental===true,reserved_cost:run.cost_per_task,query,created_at:now()}).catch(e=>{if(e.code!==6)throw e;}));
   }
@@ -137,7 +138,7 @@ async function settleFirebaseTask(store:Store,provider:Pick<CloudProvider,'id'|'
   const actual=cost,accounted=uncertain?Math.max(task.reserved_cost,cost):cost;
   const observation={id:taskId,run_id:task.run_id,location_id:task.location_id,status,position,identity_match:identityMatch,
     observed_at:Timestamp.fromMillis(Number.isFinite(Date.parse(second?.observedAt??first?.observedAt??''))?Date.parse(second?.observedAt??first!.observedAt):Date.now()),provider:provider.id,is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview',
-    result_depth:task.query.depth,query_snapshot:task.query,parser_version:'firebase-pair-v1',created_at:now(),cost_micros:actual};
+    result_depth:task.query.depth,query_snapshot:task.query,parser_version:provider.id==='local_chrome_preview'?'firebase-pair-v2-context':'firebase-pair-v1',created_at:now(),cost_micros:actual};
   await store.db.runTransaction(async tx=>{
     const current=await tx.get(ref);if(current.data()?.lease!==lease||!['RUNNING','CANCELLED'].includes(current.data()!.state))return;
     const runRef=store.ref(org,'audits',task.run_id),run=await tx.get(runRef),r=run.data()!;

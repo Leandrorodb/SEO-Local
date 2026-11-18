@@ -1,5 +1,10 @@
 # Continuidade — 18/11/2026
 
+Prioridade esclarecida pelo usuário: corrigir a medição de posições; não
+substituir esse trabalho por alterações de termos. Leia
+[VALIDACAO_POSICOES.md](VALIDACAO_POSICOES.md). O coletor agora isola sessões,
+registra contexto observado e exige sua equivalência antes de confirmar números.
+
 O trabalho foi retomado pelo usuário. A medição real no site foi concluída e as
 duas capturas de cada uma das três pesquisas concordaram. Veja o
 [estado publicado](ESTADO_PUBLICACAO_ATUAL.md) para números, horário e limites.

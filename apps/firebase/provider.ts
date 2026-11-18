@@ -4,6 +4,7 @@ import type { RankQuery } from '../../packages/contracts/index.js';
 import { parseMapsUrl } from '../../packages/domain/maps.js';
 import { digest } from './store.js';
 import { LocalChromePreviewProvider } from '../../packages/rank-providers/local-chrome-preview.js';
+import {mapsContextMatchesQuery,sameMapsContext,type MapsCaptureContext} from '../../packages/rank-providers/maps-context.js';
 
 export const candidateSchema = z.object({ name: z.string().trim().min(1).max(240), address: z.string().trim().min(1).max(500),
   city: z.string().trim().min(1).max(240), category: z.string().max(240).optional(), lat: z.number().min(-85).max(85),
@@ -11,7 +12,7 @@ export const candidateSchema = z.object({ name: z.string().trim().min(1).max(240
 export type Candidate = z.infer<typeof candidateSchema>;
 export type Capture = { observedAt: string; taskRef: string; depth: number; complete: boolean; costMicros: number;
   items: { name: string; cid: string | null; placeId: string | null; position: number; sponsored: boolean }[];
-  evidence: { source: string; checkUrl?: string; responseHash: string } };
+  evidence: { source: string; checkUrl?: string; responseHash: string; mapsContext?:MapsCaptureContext } };
 export interface CloudProvider {
   id: string; enabled: boolean; demo: boolean; maxCostMicros: number;
   resolve(url: string): Promise<Candidate[]>;
@@ -27,6 +28,8 @@ export function verifyPair(query: RankQuery, first: Capture, second: Capture) {
     if(!Number.isFinite(at)||at>Date.now()+60000)return invalid('INVALID_OBSERVATION_DATE');
     if(Date.now()-at>15*60000)return invalid('STALE_CAPTURE');
     if(!capture.taskRef?.trim()||!capture.evidence?.responseHash||!capture.evidence?.source)return invalid('MISSING_CAPTURE_EVIDENCE');
+    if(capture.evidence.source==='local_chrome_preview'&&!mapsContextMatchesQuery(capture.evidence.mapsContext,query))return invalid('MAPS_CONTEXT_MISMATCH');
+    if(capture.evidence.source==='local_chrome_preview'&&!capture.evidence.mapsContext?.sessionId?.trim())return invalid('MAPS_SESSION_UNCONFIRMED');
     if(!capture.complete)return invalid('INCOMPLETE_CAPTURE');
     const items = capture.items.filter(x => !x.sponsored).sort((a, b) => a.position - b.position);
     const hits = items.filter(x => (query.cid && x.cid === query.cid) || (query.placeId && x.placeId === query.placeId));
@@ -42,6 +45,8 @@ export function verifyPair(query: RankQuery, first: Capture, second: Capture) {
   const a = check(first), b = check(second);
   const reason=!a.valid?a.reason:!b.valid?b.reason:first.taskRef===second.taskRef?'REUSED_CAPTURE':
     first.evidence.source!==second.evidence.source?'SOURCE_MISMATCH':
+    first.evidence.source==='local_chrome_preview'&&first.evidence.mapsContext!.sessionId===second.evidence.mapsContext!.sessionId?'REUSED_BROWSER_SESSION':
+    first.evidence.source==='local_chrome_preview'&&!sameMapsContext(first.evidence.mapsContext!,second.evidence.mapsContext!)?'MAPS_CONTEXT_DIVERGENCE':
     Date.parse(second.observedAt)<Date.parse(first.observedAt)-1000?'INVALID_CAPTURE_ORDER':
     a.position!==b.position?'POSITION_DIVERGENCE':digest(a.prefix)!==digest(b.prefix)?'ORDER_DIVERGENCE':'TWO_CAPTURES_CONFIRMED';
   const verified=reason==='TWO_CAPTURES_CONFIRMED'&&a.valid&&b.valid;
@@ -157,8 +162,8 @@ export class LocalChromeCloudProvider implements CloudProvider {
       items,
       evidence: {
         source: this.id,
-        checkUrl: `https://www.google.com/maps/search/${encodeURIComponent(query.term)}/@${query.lat},${query.lng},15z?hl=pt-BR`,
-        responseHash: digest({ items, taskRef: result.taskRef, complete }),
+        ...(result.mapsContext?{checkUrl:result.mapsContext.mapUrl,mapsContext:result.mapsContext}:{}),
+        responseHash: digest({ items, taskRef: result.taskRef, complete,mapsContext:result.mapsContext??null }),
       },
     };
   }

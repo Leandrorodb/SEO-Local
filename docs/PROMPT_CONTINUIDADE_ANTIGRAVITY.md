@@ -1,5 +1,10 @@
 # Continuidade do SEO-Local
 
+Prioridade atual: precisão das posições. O usuário esclareceu que a cidade no
+termo era para a comparação manual; não desvie para o gerador de palavras-chave.
+Leia `docs/VALIDACAO_POSICOES.md`: sessões isoladas, área observada e teste real
+5º/5º na área fixa, sem alegar ranking universal ou estabilidade futura.
+
 Continue este projeto existente. Antes de editar, leia `README.md`,
 `docs/ESTADO_PUBLICACAO_ATUAL.md`, `docs/RETOMAR.md` e `docs/DESENVOLVIMENTO.md`.
 Compare o Git atual com os commits públicos; não restaure uma entrega antiga.

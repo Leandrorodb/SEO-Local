@@ -3,6 +3,7 @@
 ## Versão atual: Firebase + Render Free
 
 - [Estado publicado e limites](ESTADO_PUBLICACAO_ATUAL.md)
+- [Validação das posições e sessões isoladas](VALIDACAO_POSICOES.md)
 - [Desenvolvimento, testes e publicação](DESENVOLVIMENTO.md)
 - [Arquitetura atual](ARQUITETURA.md)
 - [Validação de 18/11/2026](VALIDACAO_2026-11-18.md)

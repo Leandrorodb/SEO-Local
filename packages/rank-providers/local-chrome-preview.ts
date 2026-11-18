@@ -3,12 +3,13 @@
  * Runs with a real, visible Chrome, never headless, bypassing challenges or rotating identity.
  * Disabled by default; explicit local test opt-in, no paid requests.
  */
-import { createHash } from 'node:crypto';
+import { createHash,randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseMapsUrl } from '../domain/maps.js';
 import { cityFromBrazilianAddress, coordinatesFromMapsUrl, mapsInterruption } from './maps-detail.js';
 import { AppError } from '../domain/errors.js';
+import {readMapsContext,mapsContextMatchesQuery} from './maps-context.js';
 import type { RankQuery } from '../contracts/index.js';
 import type { ProviderResult, RankProvider } from './index.js';
 import { cidFromResultUrl, stitchOrganicSnapshots, reconcileRepeatedPasses, normalizeListingName, type VerifiedList, type ObservedCard } from './verified-organic.js';
@@ -186,6 +187,7 @@ export class LocalChromePreviewProvider implements RankProvider {
   readonly id = 'local_chrome_preview';
   readonly demo = true; // Explicitly noncommercial, staging only.
   private context: BrowserContext | null = null;
+  private sessionId:string|null=null;
   private busy = false;
   private blocked = false;
   private lookupBusy = false;
@@ -199,11 +201,15 @@ export class LocalChromePreviewProvider implements RankProvider {
     return { maxCostMicros: 0, depth: 20 };
   }
 
-  private async browser(): Promise<BrowserContext> {
-    if (this.context) return this.context;
+  private async browser(isolatedCapture=false): Promise<BrowserContext> {
+    if (this.context&&!isolatedCapture) return this.context;
+    // Independent confirmations must not inherit the listing lookup, previous
+    // queries, cookies or Google session state from the earlier capture.
+    if(this.context)await this.dispose();
     const { chromium } = await import('@playwright/test');
     await mkdir(this.evidence, { recursive: true });
-    const profile = path.resolve('work', 'local-chrome-profile-' + process.pid);
+    const sessionId=randomUUID();
+    const profile = path.resolve('work', 'local-chrome-profile-' + process.pid+'-'+sessionId);
     const launched = await chromium.launchPersistentContext(profile, {
       channel: 'chrome', headless: false, chromiumSandbox: true,
       viewport: { width: 1360, height: 920 }, locale: 'pt-BR',
@@ -211,6 +217,7 @@ export class LocalChromePreviewProvider implements RankProvider {
     });
     launched.on('close', () => { if (this.context === launched) this.context = null; });
     this.context = launched;
+    this.sessionId=sessionId;
     await launched.grantPermissions(['geolocation'], { origin: 'https://www.google.com' });
     await launched.addInitScript('if (typeof globalThis.__name === "undefined") { globalThis.__name = (f) => f; window.__name = (f) => f; }');
     return launched;
@@ -346,7 +353,7 @@ export class LocalChromePreviewProvider implements RankProvider {
     const base: ProviderResult = { observedAt, taskRef, depth: 20, complete: false, costMicros: 0, items: [] };
     let page: Page | null = null;
     try {
-      const ctx = await this.browser();
+      const ctx = await this.browser(true);
       await mkdir(this.evidence, { recursive: true });
       await ctx.setGeolocation({ latitude: query.lat, longitude: query.lng, accuracy: 100 });
       page = ctx.pages().find((tab) => !tab.isClosed()) ?? await ctx.newPage();
@@ -401,7 +408,11 @@ export class LocalChromePreviewProvider implements RankProvider {
             await page.waitForTimeout(400);
           }
         }
-        const approved = Boolean(query.cid && query.expectedName) &&
+        const visibleTerm=await page.getByRole('combobox').inputValue().catch(()=>'');
+        const observedContext=readMapsContext(page.url(),visibleTerm,page.viewportSize());
+        if(observedContext&&this.sessionId)base.mapsContext={...observedContext,sessionId:this.sessionId};
+        const contextConfirmed=mapsContextMatchesQuery(base.mapsContext,query);
+        const approved = Boolean(query.cid && query.expectedName) && contextConfirmed &&
           reconciled.accepted && (!exactMatch || targetEvidence);
         // No position OR competitor rank is published from a failed proof.
         if (approved) {
@@ -419,6 +430,7 @@ export class LocalChromePreviewProvider implements RankProvider {
           term: query.term,
           point: { lat: query.lat, lng: query.lng },
           mapsUrlAtProof: page.url(),
+          mapsContext:base.mapsContext??null,
           target: { cid: query.cid, name: query.expectedName },
           scans: [firstPass, secondPass].filter(Boolean).map((scan) => ({
             valid: scan!.valid, reason: scan!.reason, snapshots: scan!.totalSnapshots,
@@ -435,7 +447,7 @@ export class LocalChromePreviewProvider implements RankProvider {
           decision: {
             verified: approved,
             reason: approved ? 'TWO_INDEPENDENT_ORDERED_SCANS_AND_EVIDENCE' :
-              (exactMatch && !targetEvidence ? 'NO_TARGET_SCREENSHOT' : reconciled.reason),
+              (!contextConfirmed ? 'MAPS_CONTEXT_MISMATCH' : exactMatch && !targetEvidence ? 'NO_TARGET_SCREENSHOT' : reconciled.reason),
             organicPosition: approved && exactMatch ? reconciled.organicIndex + 1 : null,
             visualPosition: approved && exactMatch ? reconciled.visualIndex + 1 : null,
             sponsoredBefore: approved && exactMatch ? reconciled.sponsoredBefore : null,
@@ -474,5 +486,6 @@ export class LocalChromePreviewProvider implements RankProvider {
   async dispose() {
     await this.context?.close().catch(() => {});
     this.context = null;
+    this.sessionId=null;
   }
 }
