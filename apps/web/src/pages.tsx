@@ -378,6 +378,10 @@ export function Terms() {
   const [products, setProducts] = useState('');
   const [termLimit, setTermLimit] = useState(40);
   const [discoveryNotice, setDiscoveryNotice] = useState('');
+  const [includeInactive, setIncludeInactive] = useState(false);
+  const visibleTerms = (terms.data ?? [])
+    .filter(k => includeInactive || k.status !== 'INACTIVE')
+    .sort((a,b) => a.cluster.localeCompare(b.cluster,'pt-BR') || a.term.localeCompare(b.term,'pt-BR'));
   const niches = useQuery({
     queryKey: ['niches', w.org],
     enabled: w.signed && !!w.org && w.role !== 'client_viewer',
@@ -531,6 +535,7 @@ export function Terms() {
           </Panel>
         </div>
         <Panel title="Revisão dos termos">
+          <label><input type="checkbox" checked={includeInactive} onChange={e=>setIncludeInactive(e.target.checked)} /> Incluir termos desativados</label>
           {w.role !== 'client_viewer' && Boolean(terms.data?.some((k) => ['SUGGESTED','VALIDATED'].includes(k.status))) && (
             <div className="actions">
               <button className="primary" onClick={() => {
@@ -542,7 +547,7 @@ export function Terms() {
           )}
           <QueryState pending={terms.isLoading} error={terms.error}>
             <Table headers={['Pesquisa', 'Cluster', 'Tipo', 'Status', 'Revisão']}>
-              {terms.data?.map((k) => (
+              {visibleTerms.map((k) => (
                 <tr key={k.id}>
                   <td>{k.term}</td>
                   <td>{k.cluster}</td>
@@ -598,7 +603,7 @@ export function Terms() {
                 </tr>
               ))}
             </Table>
-            {!terms.data?.length && (
+            {!visibleTerms.length && (
               <Empty title="Nenhum termo importado">Cole e revise os termos desta unidade.</Empty>
             )}
           </QueryState>

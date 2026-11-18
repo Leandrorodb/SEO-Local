@@ -31,6 +31,12 @@ Não houve login ou alteração da localização do navegador nessa comparação
 
 ## Testes
 
+Na ficha da Terremoto, os dois termos ativos sem cidade foram desativados pela
+interface. Foram geradas e revisadas oito consultas comerciais com Varginha;
+o termo de marca com cidade já existia. O site confirmou nove termos ativos e
+nenhuma sugestão pendente. A tela agrupa a lista por cluster e deixa os termos
+desativados acessíveis por um filtro, preservando o histórico.
+
 96 testes principais aprovados. Regressões cobrem cidade em todos os segmentos,
 bairros, serviços e marca, além dos clusters e do vocabulário de motopeças.
 Integração Firebase aprovada em emuladores, incluindo a rota de sugestões com a
