@@ -464,7 +464,7 @@ export function Terms() {
             <label>
               Nicho
               <select value={niche} onChange={(e) => setNiche(e.target.value)}>
-                <option value="auto">Detectar pelo nome da ficha</option>
+                <option value="auto">Detectar pelo nome e pela categoria</option>
                 {niches.data?.map((n) => (
                   <option key={n.value} value={n.value}>
                     {n.title}

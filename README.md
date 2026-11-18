@@ -9,7 +9,7 @@ A versão atual usa **Firebase Hosting + Authentication + Firestore (Spark)** e 
 ## Como usar
 
 1. Entre com Google e selecione a organização e a empresa.
-2. Em **Medir empresa**, confirme a ficha e revise termos que correspondem ao negócio.
+2. Em **Medir empresa**, confirme a ficha e revise termos que correspondem ao negócio e à cidade. As sugestões já incluem a cidade da ficha e são separadas por clusters.
 3. Com o coletor online, prepare uma auditoria em ponto único e inicie a medição.
 4. Confira **Resultados → Histórico → Conferir capturas e motivo da decisão**. Resultados divergentes ou incompletos ficam inconclusivos, sem posição publicada.
 

@@ -1,5 +1,13 @@
 # Publicação e validação — 18/11/2026
 
+**Atualização dos termos:** o usuário esclareceu que precisa de consultas com
+a cidade da ficha, como `motopeças Varginha`, porque pesquisa de outra localidade.
+O gerador agora inclui a cidade em todas as sugestões. Para motopeças, separa
+lojas, peças, categoria e marca, sem incluir acessórios ou serviços não confirmados.
+Os números da auditoria abaixo pertencem aos termos literais antigos e ao ponto
+indicado; não devem ser transferidos para a nova consulta com cidade.
+[Detalhes da correção](TERMOS_POR_CIDADE.md).
+
 - Site: https://seo-local-64b17.web.app
 - API: https://seo-local-api-vh6q.onrender.com
 - Saúde: https://seo-local-api-vh6q.onrender.com/health

@@ -427,10 +427,11 @@ export function QuickMeasure() {
       {!selected ? <Empty title="Primeiro identifique a empresa">Depois geraremos palavras-chave para o nicho correto.</Empty> : <>
         <div className="quick-summary"><strong>{active} termos ativos · {pending} aguardando revisão</strong>
           <small>Você pode gerar novos termos ou continuar usando os já aprovados.</small></div>
+        <p className="muted">As sugestões incluem a cidade da ficha: {selected.city}. Revise também o segmento e os clusters antes de importar.</p>
         <div className="quick-grid">
           <label>Segmento da empresa
             <select value={niche} onChange={(e) => setNiche(e.target.value)}>
-              <option value="auto">Detectar automaticamente pelo nome</option>
+              <option value="auto">Detectar pelo nome e pela categoria</option>
               {niches.data?.map((n) => <option key={n.value} value={n.value}>{n.title}</option>)}
             </select>
           </label>
@@ -469,10 +470,11 @@ export function QuickMeasure() {
           <small>Sem custo de API, mas depende de Chrome disponível, medidor habilitado e identificação confirmada. Não é fonte licenciada para operação comercial.</small></div>
         <label>Área de medição
           <select value={mode} onChange={(e) => { setMode(e.target.value as 'single' | 'grid5x5'); resetAudit(); }}>
-            <option value="single">Ponto único · como o script do terminal</option>
+            <option value="single">Ponto da empresa · 1 ponto por termo</option>
             <option value="grid5x5">GeoGrid 5 × 5 · 25 pontos por termo</option>
           </select>
         </label>
+        <p className="muted">O termo é pesquisado literalmente. O ponto da medição pertence à empresa em {selected.city}; uma busca anônima feita de outro lugar pode mostrar outra ordem, mesmo com a cidade no termo.</p>
         {mode === 'grid5x5' && <label>Espaçamento (metros)<input type="number" min="50" max="10000" value={spacingM}
           onChange={(e) => { setSpacingM(Number(e.target.value)); resetAudit(); }} /></label>}
         {selected.identity_status !== 'CONFIRMED' && <p className="error">A ficha ainda não foi confirmada por identificador estável. Volte à etapa 1.</p>}

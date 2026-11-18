@@ -6,6 +6,7 @@
 - [Desenvolvimento, testes e publicação](DESENVOLVIMENTO.md)
 - [Arquitetura atual](ARQUITETURA.md)
 - [Validação de 18/11/2026](VALIDACAO_2026-11-18.md)
+- [Termos por cidade e comparação anônima](TERMOS_POR_CIDADE.md)
 - [Retomada e pendências](RETOMAR.md)
 - [Continuidade em outro assistente](PROMPT_CONTINUIDADE_ANTIGRAVITY.md)
 

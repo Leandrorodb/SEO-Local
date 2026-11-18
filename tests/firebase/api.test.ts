@@ -37,6 +37,10 @@ test('Firebase emulator: cadastro -> termos -> auditoria -> 7º comprovado -> re
     const input={mapsUrl:'https://www.google.com/maps?cid=777',externalId:'777'};
     const saved=await request('POST','/v1/locations/register-confirmed',input);assert.equal(saved.statusCode,201,saved.body);const location=saved.json().data.location.id;
     const reused=await request('POST','/v1/locations/register-confirmed',input);assert.equal(reused.json().data.location.id,location);
+    const suggestions=await request('POST',`/v1/locations/${location}/keywords:suggest`,{niche:'motopeças',limit:20});
+    assert.equal(suggestions.statusCode,200,suggestions.body);
+    assert.ok(suggestions.json().data.terms.every((t:any)=>t.query.includes('Cidade de teste')));
+    assert.ok(suggestions.json().data.terms.some((t:any)=>t.query==='motopeças Cidade de teste'));
     const pasted=await request('POST',`/v1/locations/${location}/keywords:paste`,{content:'serviço confirmado de teste',preview:false});assert.equal(pasted.statusCode,200,pasted.body);
     assert.equal((await request('POST',`/v1/locations/${location}/keywords:activate-reviewed`,{confirmed:true})).statusCode,200);
     const grid=await request('POST',`/v1/locations/${location}/grids`,{mode:'single',spacingM:500});assert.equal(grid.statusCode,200,grid.body);

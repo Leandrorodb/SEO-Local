@@ -4,6 +4,11 @@ Continue este projeto existente. Antes de editar, leia `README.md`,
 `docs/ESTADO_PUBLICACAO_ATUAL.md`, `docs/RETOMAR.md` e `docs/DESENVOLVIMENTO.md`.
 Compare o Git atual com os commits públicos; não restaure uma entrega antiga.
 
+Correção posterior do usuário: os termos devem incluir a cidade da ficha,
+como `motopeças Varginha`. Leia `docs/TERMOS_POR_CIDADE.md`. O 2º lugar histórico
+de `moto peças` não é uma comprovação para essa nova consulta. Não misture os
+dois recortes nem atribua toda divergência de uma busca anônima à personalização.
+
 ## Objetivo e decisões do usuário
 
 O usuário precisa cadastrar fichas Google Maps e medir posições corretas por

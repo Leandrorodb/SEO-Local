@@ -44,7 +44,7 @@ export const NICHES: readonly NicheDefinition[] = [
   { value:'barbearia', title:'Barbearias', aliases:['barbearia','barber'], categories:['barbearia','corte de cabelo masculino','barbeiro'], intent:'service' },
   { value:'salao', title:'Salões de beleza', aliases:['salao de beleza','salão de beleza','cabeleireiro','cabeleireira'], categories:['salão de beleza','cabeleireiro','serviços de beleza'], intent:'service' },
   { value:'autopecas', title:'Autopeças', aliases:['autopecas','autopeças','pecas automotivas','peças automotivas'], categories:['loja de autopeças','autopeças','peças para carros'], intent:'purchase' },
-  { value:'motopeças', title:'Motopeças', aliases:['moto pecas','moto peças','motopeças','motopecas'], categories:['loja de motopeças','peças de moto','acessórios para moto'], intent:'purchase' },
+  { value:'motopeças', title:'Motopeças', aliases:['moto pecas','moto peças','motopeças','motopecas'], categories:['motopeças','moto peças','peças de moto','peças para motos','peças para motocicletas','loja de motopeças','loja de peças para motos','loja de peças para motocicletas'], intent:'purchase' },
   { value:'oficina_motos', title:'Oficinas de motos', aliases:['oficina mecanica de motos','oficina mecânica de motos','oficina de motos','oficina de motocicletas','mecanico de motos','mecânico de motos','mecanica de motocicletas','mecânica de motocicletas'], categories:['oficina de motos','mecânico de motos','manutenção de motocicletas'], intent:'service' },
   { value:'oficina', title:'Oficinas mecânicas', aliases:['oficina mecanica','oficina mecânica','mecanica automotiva','mecânica automotiva'], categories:['oficina mecânica','mecânico de carros','manutenção automotiva'], intent:'service' },
   { value:'contabilidade', title:'Contabilidade', aliases:['contabilidade','contabil','contábil'], categories:['escritório de contabilidade','contador','serviços contábeis'], intent:'service' },
@@ -107,7 +107,11 @@ export function suggestKeywords(input: {
   const seen = new Set<string>();
   const terms: SuggestedTerm[] = [];
   const add = (query: string, cluster: string, priority: Priority) => {
-    const q = clean(query);
+    const literal = clean(query);
+    // A geographic keyword must name the listing's city. A clean browser in
+    // another city must not silently turn a suggested query into a local one there.
+    // This scopes the query text; it does NOT prove the observer's GPS location.
+    const q = ` ${norm(literal)} `.includes(` ${norm(city)} `) ? literal : `${literal} ${city}`;
     if (!q || q.length > 240 || /[<>\r\n]/.test(q)) return;
     const k = norm(q);
     if (!k || seen.has(k) || terms.length >= limit) return;
@@ -117,15 +121,17 @@ export function suggestKeywords(input: {
   // Broaden *search patterns*, never assert business amenities or specialties.
   // Specific procedures/products require operator confirmation in serviceCandidates.
   for (const [i, category] of def.categories.entries()) {
-    add(`${category} em ${city}`, 'Categoria principal', i === 0 ? 'P1' : 'P2');
-    add(`${category} ${city}`, 'Categoria principal', 'P2');
-    add(`${category} perto de mim`, 'Localização e proximidade', i === 0 ? 'P1' : 'P2');
+    const cluster = def.value === 'motopeças'
+      ? category.startsWith('loja de ') ? 'Lojas de motopeças' : category.startsWith('peças ') ? 'Peças para motocicletas' : 'Motopeças na cidade'
+      : 'Categoria principal';
+    if (def.value !== 'motopeças') add(`${category} em ${city}`, cluster, i === 0 ? 'P1' : 'P2');
+    add(`${category} ${city}`, cluster, i === 0 ? 'P1' : 'P2');
     if (neighborhood) {
       add(`${category} no ${neighborhood} ${city}`, 'Localização e proximidade', i === 0 ? 'P1' : 'P2');
-      add(`${category} ${neighborhood}`, 'Localização e proximidade', 'P2');
+      add(`${category} ${neighborhood} ${city}`, 'Localização e proximidade', 'P2');
     }
   }
-  if (def.intent !== 'generic') {
+  if (def.intent !== 'generic' && def.value !== 'motopeças') {
     for (const [i, category] of def.categories.entries()) {
       add(`melhor ${category} em ${city}`, 'Comparação e descoberta', 'P2');
       add(`${category} bem avaliado em ${city}`, 'Comparação e descoberta', 'P2');
@@ -147,7 +153,6 @@ export function suggestKeywords(input: {
   for (const service of serviceCandidates) {
     add(`${service} em ${city}`, 'Serviços confirmados', 'P1');
     add(`${service} ${city}`, 'Serviços confirmados', 'P2');
-    add(`${service} perto de mim`, 'Serviços confirmados', 'P2');
     if (neighborhood) add(`${service} ${neighborhood} ${city}`, 'Serviços confirmados', 'P2');
   }
   add(name, 'Marca', 'P1');
@@ -162,6 +167,6 @@ export function suggestKeywords(input: {
     reviewRequired: true,
     notice: infer.confidence === 'unconfirmed' && (!input.niche || input.niche === 'auto')
       ? 'Nicho não reconhecido pelo nome. Confirme a categoria e os serviços antes de importar.'
-      : 'Sugestões automáticas para revisão; não comprovam serviços, demanda ou ranking.',
+      : `Sugestões com a cidade ${city} para revisão. O termo não fixa a localização do observador nem comprova serviços, demanda ou ranking.`,
   };
 }

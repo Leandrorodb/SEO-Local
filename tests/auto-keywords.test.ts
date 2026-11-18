@@ -51,9 +51,29 @@ test('oficina de motos keeps motorcycle searches and never suggests car services
 test('operator can choose motopeças while a generic car workshop remains unchanged', () => {
   const shop=suggestKeywords({name:'Terremoto Moto Peças',city:'Varginha',primaryCategory:'Oficina mecânica de motos',niche:'motopeças'});
   assert.equal(shop.classification.niche,'motopeças');
-  assert.ok(shop.terms.some(t=>t.query==='peças de moto em Varginha'));
+  assert.ok(shop.terms.some(t=>t.query==='peças de moto Varginha'));
   assert.ok(!shop.terms.some(t=>/carros|automotiv/i.test(t.query)));
   assert.equal(detectNiche('Oficina mecânica').niche,'oficina');
+});
+
+test('motopeças uses the confirmed city in commercial and brand clusters without invented products',()=>{
+  const r=suggestKeywords({name:'Terremoto Moto Peças',city:'Varginha/MG',niche:'motopeças'});
+  assert.ok(r.terms.some(t=>t.query==='motopeças Varginha'&&t.cluster==='Motopeças na cidade'));
+  assert.ok(r.terms.some(t=>t.query==='loja de peças para motos Varginha'&&t.cluster==='Lojas de motopeças'));
+  assert.ok(r.terms.some(t=>t.query==='peças para motocicletas Varginha'&&t.cluster==='Peças para motocicletas'));
+  assert.ok(r.terms.some(t=>t.query==='Terremoto Moto Peças Varginha'&&t.cluster==='Marca'));
+  assert.ok(r.terms.every(t=>t.query.includes('Varginha')));
+  assert.ok(!r.terms.some(t=>/perto de mim|acessórios|carros|troca de óleo|pneu|Honda|Yamaha/i.test(t.query)));
+});
+
+test('every suggested niche keeps the listing city, including neighborhoods, services and brand',()=>{
+  for(const niche of listNiches()){
+    const r=suggestKeywords({name:'Empresa Horizonte',city:'São Thomé das Letras/MG',niche:niche.value,
+      neighborhood:'Centro',services:['serviço confirmado'],limit:100});
+    assert.ok(r.terms.length>0);
+    assert.ok(r.terms.every(t=>t.query.includes('São Thomé das Letras')),niche.value);
+    assert.ok(!r.terms.some(t=>/perto de mim/.test(t.query)),niche.value);
+  }
 });
 
 test('confirmed neighborhood and services create local strategic clusters without invented amenities', () => {
