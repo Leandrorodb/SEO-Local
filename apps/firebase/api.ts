@@ -15,7 +15,7 @@ import { listNiches, suggestKeywords } from '../../packages/domain/auto-keywords
 import { compareHistory, feedbackText, pdfBytes } from '../api/analytics.js';
 import { alertRules, signals } from '../api/signals.js';
 import { registerFirebaseOwner } from './owner.js';
-import { createAudit, dispatchAudit } from './worker.js';
+import { createAudit, dispatchAudit, requestAuditCancellation } from './worker.js';
 import { localQueueProvider } from './queue-provider.js';
 
 export type FirebaseApiOptions = { store: Store; auth: Auth; provider?: CloudProvider; logging?: boolean };
@@ -116,6 +116,11 @@ export function buildFirebaseApp(options: FirebaseApiOptions) {
       mode:local?'LOCAL_EXPERIMENTAL':'COMMERCIAL',
       canResolve:active.enabled,canMeasureMaps:active.enabled,
       noPaidApi:local,reason:active.enabled?null:'PROVIDER_NOT_CONFIGURED'};
+  });
+  route('POST','/v1/audits/:id/cancel',async r=>{
+    const c=await context(r,writers),b=z.object({reason:z.string().trim().min(3).max(500)}).strict().parse(r.body);
+    const run=await store.get(c.org,'audits',r.params.id);await store.location(c,run.location_id);
+    return requestAuditCancellation(store,c,r.params.id,b.reason);
   });
   route('GET','/v1/brands',async r => {const c=await context(r);return sorted(await store.list(c.org,'brands'));});
   route('POST','/v1/brands',async r => {

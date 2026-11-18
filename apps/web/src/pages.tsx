@@ -3,6 +3,7 @@ import { useState, useRef, type FormEvent, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, downloadPdf, errorText } from './session';
 import { lookupMapsWithCollector } from './maps-lookup';
+import { MeasurementEvidence, measurementReason } from './measurement-evidence';
 import { useWorkspace, PageTitle, LocationPicker } from './main';
 import { Empty, Panel, Badge, Table } from '../../../packages/ui/index';
 import type { Location, Keyword, Grid, Run, Ranking, Report, Organization, Rank } from './types';
@@ -839,7 +840,7 @@ export function Audits() {
         </div>
         <Panel title="Histórico de auditorias">
           <QueryState pending={runs.isLoading} error={runs.error}>
-            <Table headers={['Data', 'Status', 'Consultas', 'Fonte', 'Custo real']}>
+            <Table headers={['Data', 'Status', 'Consultas', 'Fonte', 'Custo real', 'Ações']}>
               {runs.data?.map((r) => (
                 <tr key={r.id}>
                   <td>{date(r.created_at)}</td>
@@ -852,6 +853,7 @@ export function Audits() {
                     {r.provider === 'local_chrome_preview' ? ' · EXPERIMENTAL' : r.is_demo ? ' · DEMO' : ''}
                   </td>
                   <td>{usd(Number(r.actual_cost))}</td>
+                  <td>{w.role !== 'client_viewer' && ['QUEUED','RUNNING'].includes(r.status) && <button type="button" onClick={()=>void w.act(()=>api(`/audits/${r.id}/cancel`,w.org,{reason:'Cancelamento solicitado no histórico'}),'Cancelamento solicitado.')}>Cancelar</button>}</td>
                 </tr>
               ))}
             </Table>
@@ -958,6 +960,7 @@ export function Results() {
                     <td className="rank">{m.status === 'VERIFIED' ? m.position + 'º' : '—'}</td>
                     <td>
                       <Badge>{m.status}</Badge>
+                      {m.failure_reason && <small>{measurementReason(m.failure_reason)}</small>}
                       {m.provider === 'local_chrome_preview' ? <Badge>EXPERIMENTAL</Badge> : m.is_demo && <Badge>DEMO</Badge>}
                     </td>
                     <td>
@@ -981,6 +984,7 @@ export function Results() {
           <Panel title={'Evolução · ' + row.query_snapshot.term}>
             <p className="muted">Mesmo ponto, superfície, idioma, dispositivo e provedor.</p>
             <HistoryChart rows={history} />
+            <MeasurementEvidence org={w.org} measurementId={row.id} />
             <Table headers={['Momento', 'Posição orgânica', 'Variação', 'Status']}>
               {history.map((m) => (
                 <tr key={m.id}>

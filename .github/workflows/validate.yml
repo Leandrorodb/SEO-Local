@@ -12,6 +12,8 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  firebase:
+    uses: ./.github/workflows/firebase-render.yml
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 20

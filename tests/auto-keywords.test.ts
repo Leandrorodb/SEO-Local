@@ -39,6 +39,23 @@ test('unknown category never silently degrades to generic category', () => {
   assert.throws(() => suggestKeywords({ name: 'Empresa X', city: 'Natal', niche: 'nicho inventado' }), /UNKNOWN_NICHE/);
 });
 
+test('oficina de motos keeps motorcycle searches and never suggests car services', () => {
+  const r = suggestKeywords({name:'Terremoto Moto Peças',city:'Varginha',primaryCategory:'Oficina mecânica de motos'});
+  assert.equal(r.classification.niche,'oficina_motos');
+  assert.equal(r.classification.confidence,'category_match');
+  assert.ok(r.terms.some(t=>t.query==='oficina de motos em Varginha'));
+  assert.ok(!r.terms.some(t=>/carros|automotiv|autopeças|pneus|injeção|troca de óleo/i.test(t.query)));
+  assert.equal(r.reviewRequired,true);
+});
+
+test('operator can choose motopeças while a generic car workshop remains unchanged', () => {
+  const shop=suggestKeywords({name:'Terremoto Moto Peças',city:'Varginha',primaryCategory:'Oficina mecânica de motos',niche:'motopeças'});
+  assert.equal(shop.classification.niche,'motopeças');
+  assert.ok(shop.terms.some(t=>t.query==='peças de moto em Varginha'));
+  assert.ok(!shop.terms.some(t=>/carros|automotiv/i.test(t.query)));
+  assert.equal(detectNiche('Oficina mecânica').niche,'oficina');
+});
+
 test('confirmed neighborhood and services create local strategic clusters without invented amenities', () => {
   const r = suggestKeywords({ name: 'Pousada Recanto', city: 'São Thomé das Letras/MG',
     neighborhood: 'Sobradinho', services: ['chalé com varanda'], limit: 60 });

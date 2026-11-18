@@ -55,6 +55,7 @@ export type Rank = {
   observed_at: string;
   is_demo: boolean;
   result_depth: number;
+  failure_reason?: string | null;
   query_snapshot: {
     term: string;
     kind: string;

@@ -21,23 +21,33 @@ export interface CloudProvider {
 // CID/Place ID and normalized business name must agree in TWO separate captures.
 export function verifyPair(query: RankQuery, first: Capture, second: Capture) {
   const clean = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const invalid=(reason:string)=>({valid:false as const,reason});
   function check(capture: Capture) {
-    requireThat(Number.isFinite(Date.parse(capture.observedAt)) && Date.parse(capture.observedAt) <= Date.now() + 60000, 502, 'INVALID_OBSERVATION_DATE');
+    const at=Date.parse(capture.observedAt);
+    if(!Number.isFinite(at)||at>Date.now()+60000)return invalid('INVALID_OBSERVATION_DATE');
+    if(Date.now()-at>15*60000)return invalid('STALE_CAPTURE');
+    if(!capture.taskRef?.trim()||!capture.evidence?.responseHash||!capture.evidence?.source)return invalid('MISSING_CAPTURE_EVIDENCE');
+    if(!capture.complete)return invalid('INCOMPLETE_CAPTURE');
     const items = capture.items.filter(x => !x.sponsored).sort((a, b) => a.position - b.position);
     const hits = items.filter(x => (query.cid && x.cid === query.cid) || (query.placeId && x.placeId === query.placeId));
-    if (hits.length !== 1 || !capture.complete || !query.expectedName) return null;
+    if (hits.length !== 1 || !query.expectedName) return invalid('TARGET_NOT_CONFIRMED');
     const hit = hits[0];
-    if ((query.cid && hit.cid && query.cid !== hit.cid) || (query.placeId && hit.placeId && query.placeId !== hit.placeId) || clean(hit.name) !== clean(query.expectedName)) return null;
-    if (!Number.isInteger(hit.position) || hit.position < 1 || hit.position > query.depth) return null;
+    if ((query.cid && hit.cid && query.cid !== hit.cid) || (query.placeId && hit.placeId && query.placeId !== hit.placeId) || clean(hit.name) !== clean(query.expectedName)) return invalid('IDENTITY_MISMATCH');
+    if (!Number.isInteger(capture.depth)||!Number.isInteger(hit.position) || hit.position < 1 || hit.position > Math.min(query.depth,capture.depth)) return invalid('INVALID_CAPTURE_DEPTH');
     const prefix = items.filter(x => x.position <= hit.position);
-    if (prefix.length !== hit.position || prefix.some((x, i) => x.position !== i + 1 || !(x.cid || x.placeId))) return null;
-    if (new Set(prefix.map(x => x.cid ? 'cid:' + x.cid : 'place:' + x.placeId)).size !== prefix.length) return null;
-    return { position: hit.position, prefix: prefix.map(x => ({ cid: x.cid, placeId: x.placeId, name: clean(x.name) })) };
+    if (prefix.length !== hit.position || prefix.some((x, i) => x.position !== i + 1 || !(x.cid || x.placeId))) return invalid('INVALID_ORGANIC_PREFIX');
+    if (new Set(prefix.map(x => x.cid ? 'cid:' + x.cid : 'place:' + x.placeId)).size !== prefix.length) return invalid('INVALID_ORGANIC_PREFIX');
+    return {valid:true as const,position: hit.position, prefix: prefix.map(x => ({ cid: x.cid, placeId: x.placeId, name: clean(x.name) })) };
   }
   const a = check(first), b = check(second);
-  const verified = first.taskRef !== second.taskRef && a && b && a.position === b.position && digest(a.prefix) === digest(b.prefix);
+  const reason=!a.valid?a.reason:!b.valid?b.reason:first.taskRef===second.taskRef?'REUSED_CAPTURE':
+    first.evidence.source!==second.evidence.source?'SOURCE_MISMATCH':
+    Date.parse(second.observedAt)<Date.parse(first.observedAt)-1000?'INVALID_CAPTURE_ORDER':
+    a.position!==b.position?'POSITION_DIVERGENCE':digest(a.prefix)!==digest(b.prefix)?'ORDER_DIVERGENCE':'TWO_CAPTURES_CONFIRMED';
+  const verified=reason==='TWO_CAPTURES_CONFIRMED'&&a.valid&&b.valid;
   return { status: verified ? 'VERIFIED' : 'REVIEW', position: verified ? a.position : null,
-    identityMatch: verified ? query.cid ? 'cid:' + query.cid : 'place:' + query.placeId : null };
+    identityMatch: verified ? query.cid ? 'cid:' + query.cid : 'place:' + query.placeId : null,
+    reason,observedPositions:[a.valid?a.position:null,b.valid?b.position:null] };
 }
 export class DataForSeoProvider implements CloudProvider {
   id = 'dataforseo';

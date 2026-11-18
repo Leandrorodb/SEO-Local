@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import type { AuditInput, RankQuery } from '../../packages/contracts/index.js';
-import { requireThat } from '../../packages/domain/errors.js';
+import { AppError, requireThat } from '../../packages/domain/errors.js';
 import { Store, type Context, type Doc, id, now, digest, millis } from './store.js';
 import { type CloudProvider, verifyPair, type Capture } from './provider.js';
 
@@ -52,7 +52,7 @@ export async function createAudit(store:Store,c:Context,locationId:string,input:
 
 export async function dispatchAudit(store:Store,org:string,runId:string){
   const run=await store.get(org,'audits',runId),s=run.config_snapshot;
-  if(!['QUEUED','RUNNING'].includes(run.status))return;
+  if(!['QUEUED','RUNNING','CANCELLING'].includes(run.status))return;
   // Deterministic IDs allow safe re-delivery of the Firestore trigger. Creating
   // an already-created task never launches a second paid provider request.
   const writer=store.db.bulkWriter();
@@ -73,6 +73,26 @@ export async function dispatchAudit(store:Store,org:string,runId:string){
   });
 }
 
+export async function requestAuditCancellation(store:Store,c:Context,runId:string,reason:string) {
+  const result=await store.mutate(c,async tx=>{
+    const ref=store.ref(c.org,'audits',runId),snapshot=await tx.get(ref);
+    requireThat(snapshot.exists,404,'AUDIT_NOT_FOUND');
+    const run=snapshot.data()!;
+    if(['COMPLETED','COMPLETED_WITH_WARNINGS','CANCELLED'].includes(run.status))return {status:run.status};
+    if(!run.cancel_requested) {
+      tx.update(ref,{cancel_requested:true,status:'CANCELLING',cancellation_reason:reason,
+        cancellation_requested_at:now(),cancellation_requested_by:c.principal.uid});
+      tx.create(store.ref(c.org,'audit_logs',id()),{actor:c.principal.uid,action:'audit.cancel_requested',
+        resource_id:runId,metadata:{reason},created_at:now()});
+    }
+    return {status:'CANCELLING'};
+  });
+  // A previous dispatch can have been interrupted. Deterministic task IDs let
+  // the worker settle every reservation without starting another capture.
+  if(result.status==='CANCELLING')await dispatchAudit(store,c.org,runId);
+  return result;
+}
+
 export async function processFirebaseTask(store:Store,provider:CloudProvider,org:string,taskId:string){
   const ref=store.ref(org,'tasks',taskId),lease=id();
   const task=await store.db.runTransaction<Doc|null>(async tx=>{
@@ -81,28 +101,42 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
     // Triggers for one provider must never cancel or consume another provider's task.
     if (t.provider !== provider.id) return null;
     const o=await tx.get(store.org(org)),m=await tx.get(store.ref(org,'members',t.actor_uid)),u=await tx.get(store.db.doc('users/'+t.actor_uid));
-    const allowed=provider.enabled&&o.data()?.entitlement_status==='ACTIVE'&&millis(o.data()?.paid_through)>Date.now()&&
+    const run=await tx.get(store.ref(org,'audits',t.run_id));
+    const allowed=provider.enabled&&!run.data()?.cancel_requested&&o.data()?.entitlement_status==='ACTIVE'&&millis(o.data()?.paid_through)>Date.now()&&
       m.data()?.status==='ACTIVE'&&m.data()?.role===t.actor_role&&u.exists&&!u.data()?.disabled;
-    tx.update(ref,{state:allowed?'RUNNING':'CANCELLED',lease,started_at:now()});
+    tx.update(ref,{state:'RUNNING',lease,started_at:now()});
     return {...t,allowed};
   });
   if(!task)return;
-  let first:Capture|undefined,second:Capture|undefined,status='CANCELLED',position:number|null=null,identityMatch:string|null=null,cost=0,uncertain=false;
+  let first:Capture|undefined,second:Capture|undefined,status='CANCELLED',position:number|null=null,identityMatch:string|null=null,cost=0,uncertain=false,capturesAttempted=0,reason:string|null=null;
   if(task.allowed){
     try{
-      first=await provider.measure(task.query,taskId+':1');
+      capturesAttempted++;first=await provider.measure(task.query,taskId+':1');
       cost+=first.costMicros;
       // Persist the first proof before requesting the independent confirmation.
       await store.ref(org,'capture_checkpoints',taskId).create({first,created_at:now()});
-      const o=await store.org(org).get(),m=await store.ref(org,'members',task.actor_uid).get();
-      requireThat(o.data()?.entitlement_status==='ACTIVE'&&millis(o.data()?.paid_through)>Date.now()&&m.data()?.status==='ACTIVE',403,'LICENSE_SUSPENDED');
-      second=await provider.measure(task.query,taskId+':2');cost+=second.costMicros;
-      const result=verifyPair(task.query,first,second);status=result.status;position=result.position;identityMatch=result.identityMatch;
-    }catch(e){status='ERROR';uncertain=true;}
+      const [o,m,u,run]=await store.db.getAll(store.org(org),store.ref(org,'members',task.actor_uid),store.db.doc('users/'+task.actor_uid),store.ref(org,'audits',task.run_id));
+      requireThat(!run.data()?.cancel_requested,409,'AUDIT_CANCELLED');
+      requireThat(o.data()?.entitlement_status==='ACTIVE'&&millis(o.data()?.paid_through)>Date.now()&&m.data()?.status==='ACTIVE'&&m.data()?.role===task.actor_role&&u.exists&&!u.data()?.disabled,403,'LICENSE_SUSPENDED');
+      capturesAttempted++;second=await provider.measure(task.query,taskId+':2');cost+=second.costMicros;
+      const result=verifyPair(task.query,first,second);status=result.status;position=result.position;identityMatch=result.identityMatch;reason=result.reason;
+    }catch(e){
+      reason=e instanceof AppError?e.code:'CAPTURE_FAILED';
+      status=reason==='AUDIT_CANCELLED'?'CANCELLED':'ERROR';
+      uncertain=status==='ERROR';
+    }
   }
+  await settleFirebaseTask(store,provider,org,taskId,task,lease,{first,second,status,position,identityMatch,cost,uncertain,capturesAttempted,reason});
+}
+
+type TaskOutcome={first?:Capture;second?:Capture;status:string;position:number|null;identityMatch:string|null;
+  cost:number;uncertain:boolean;capturesAttempted:number;reason:string|null};
+async function settleFirebaseTask(store:Store,provider:Pick<CloudProvider,'id'|'demo'>,org:string,taskId:string,task:Doc,lease:string,outcome:TaskOutcome){
+  const ref=store.ref(org,'tasks',taskId);
+  const {first,second,status,position,identityMatch,cost,uncertain,capturesAttempted,reason}=outcome;
   const actual=cost,accounted=uncertain?Math.max(task.reserved_cost,cost):cost;
   const observation={id:taskId,run_id:task.run_id,location_id:task.location_id,status,position,identity_match:identityMatch,
-    observed_at:Timestamp.fromDate(new Date(second?.observedAt??first?.observedAt??Date.now())),provider:provider.id,is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview',
+    observed_at:Timestamp.fromMillis(Number.isFinite(Date.parse(second?.observedAt??first?.observedAt??''))?Date.parse(second?.observedAt??first!.observedAt):Date.now()),provider:provider.id,is_demo:provider.demo,is_experimental:provider.id==='local_chrome_preview',
     result_depth:task.query.depth,query_snapshot:task.query,parser_version:'firebase-pair-v1',created_at:now(),cost_micros:actual};
   await store.db.runTransaction(async tx=>{
     const current=await tx.get(ref);if(current.data()?.lease!==lease||!['RUNNING','CANCELLED'].includes(current.data()!.state))return;
@@ -110,18 +144,24 @@ export async function processFirebaseTask(store:Store,provider:CloudProvider,org
     const usageRef=store.ref(org,'monthly_usage',task.month),usage=await tx.get(usageRef),v=usage.data()!;
     const globalRef=store.db.doc('provider_budgets/'+task.month),global=await tx.get(globalRef),g=global.data()!;
     const ledgerRef=store.ref(org,'usage',task.run_id),ledger=await tx.get(ledgerRef),l=ledger.data()!;
-    const completed=r.completed_tasks+1,warnings=r.warning_tasks+Number(status!=='VERIFIED'),done=completed===r.config_snapshot.plannedTasks;
-    tx.create(store.ref(org,'measurements',taskId),observation);
+    const finalStatus=r.cancel_requested?'CANCELLED':status;
+    const finalPosition=finalStatus==='VERIFIED'?position:null;
+    const finalIdentity=finalStatus==='VERIFIED'?identityMatch:null;
+    const completed=r.completed_tasks+1,warnings=r.warning_tasks+Number(finalStatus!=='VERIFIED'),done=completed===r.config_snapshot.plannedTasks;
+    const costUncertain=uncertain||l.cost_uncertain===true;
+    const refundedUnits=Math.max(0,2-capturesAttempted);
+    // A cancelled reservation with zero capture attempts is not a measurement.
+    if(capturesAttempted>0)tx.create(store.ref(org,'measurements',taskId),{...observation,status:finalStatus,position:finalPosition,identity_match:finalIdentity,failure_reason:finalStatus==='VERIFIED'?null:reason??(r.cancel_requested?'AUDIT_CANCELLED':null)});
     tx.create(store.ref(org,'evidence',taskId),{query:task.query,first:first??null,second:second??null,
-      decision:{status,position,identityMatch},observed_at:observation.observed_at,is_experimental:provider.id==='local_chrome_preview',cost_uncertain:uncertain});
-    tx.update(ref,{state:'DONE',measurement_status:status,completed_at:now(),cost_micros:actual,cost_uncertain:uncertain});
+      decision:{status:finalStatus,position:finalPosition,identityMatch:finalIdentity,reason:reason??(r.cancel_requested?'AUDIT_CANCELLED':null)},observed_at:observation.observed_at,is_experimental:provider.id==='local_chrome_preview',cost_uncertain:uncertain});
+    tx.update(ref,{state:'DONE',measurement_status:finalStatus,completed_at:now(),cost_micros:actual,cost_uncertain:uncertain});
     tx.update(runRef,{completed_tasks:completed,warning_tasks:warnings,actual_cost:r.actual_cost+actual,
-      status:done?(warnings?'COMPLETED_WITH_WARNINGS':'COMPLETED'):'RUNNING',
+      status:done?(r.cancel_requested?'CANCELLED':warnings?'COMPLETED_WITH_WARNINGS':'COMPLETED'):r.cancel_requested?'CANCELLING':'RUNNING',
       task_totals:{QUEUED:r.config_snapshot.plannedTasks-completed,DONE:completed},...(done?{completed_at:now()}:{})});
-    tx.update(usageRef,{cost:v.cost+accounted,reserved:Math.max(0,v.reserved-task.reserved_cost)});
+    tx.update(usageRef,{cost:v.cost+accounted,reserved:Math.max(0,v.reserved-task.reserved_cost),units:Math.max(0,v.units-refundedUnits)});
     tx.update(globalRef,{cost:g.cost+accounted,reserved:Math.max(0,g.reserved-task.reserved_cost)});
-    tx.update(ledgerRef,{cost:(l.cost??0)+accounted,reserved:Math.max(0,l.reserved-task.reserved_cost),state:done?(uncertain?'RECONCILIATION_REQUIRED':'SETTLED'):'RESERVED'});
-    if(status==='VERIFIED'&&second){
+    tx.update(ledgerRef,{cost:(l.cost??0)+accounted,reserved:Math.max(0,l.reserved-task.reserved_cost),units:Math.max(0,l.units-refundedUnits),cost_uncertain:costUncertain,state:done?(costUncertain?'RECONCILIATION_REQUIRED':'SETTLED'):'RESERVED'});
+    if(finalStatus==='VERIFIED'&&second){
       const seenCompetitors=new Set<string>();
       for(const competitor of second.items.filter(x=>!x.sponsored&&x.cid!==task.query.cid).slice(0,20)){
         const competitorId=digest({taskId,cid:competitor.cid,place:competitor.placeId});
@@ -140,5 +180,23 @@ export async function recoverStalledTasks(store:Store, org?:string){
   // Local collectors must never reconcile another tenant's tasks.
   const source = org ? store.col(org,'tasks') : store.db.collectionGroup('tasks');
   const stale=await source.where('state','==','RUNNING').where('started_at','<',Timestamp.fromMillis(Date.now()-15*60000)).limit(100).get();
-  for(const task of stale.docs)await task.ref.update({state:'RECONCILIATION_REQUIRED',failure:'INTERRUPTED_PROVIDER_REQUEST',updated_at:now()});
+  for(const snapshot of stale.docs){
+    const scope=snapshot.ref.parent.parent!.id,lease=id();
+    const task=await store.db.runTransaction<Doc|null>(async tx=>{
+      const current=await tx.get(snapshot.ref),t=current.data();
+      if(!t||t.state!=='RUNNING'||millis(t.started_at)>=Date.now()-15*60000)return null;
+      if(t.provider!=='local_chrome_preview'||t.reserved_cost!==0){
+        tx.update(snapshot.ref,{state:'RECONCILIATION_REQUIRED',failure:'INTERRUPTED_PROVIDER_REQUEST',updated_at:now()});
+        return null;
+      }
+      // This known zero-cost local task can be closed without any provider call.
+      tx.update(snapshot.ref,{state:'CANCELLED',lease,failure:'INTERRUPTED_LOCAL_CAPTURE',updated_at:now()});
+      return t;
+    });
+    if(!task)continue;
+    const run=await store.get(scope,'audits',task.run_id),checkpoint=await store.ref(scope,'capture_checkpoints',snapshot.id).get();
+    await settleFirebaseTask(store,{id:task.provider,demo:run.is_demo===true},scope,snapshot.id,task,lease,{
+      first:checkpoint.data()?.first,status:'ERROR',position:null,identityMatch:null,cost:0,uncertain:false,
+      capturesAttempted:2,reason:'INTERRUPTED_LOCAL_CAPTURE'});
+  }
 }

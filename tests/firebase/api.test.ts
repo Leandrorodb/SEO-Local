@@ -2,11 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {initializeApp} from 'firebase-admin/app';
-import {getFirestore} from 'firebase-admin/firestore';
+import {getFirestore,Timestamp} from 'firebase-admin/firestore';
 import {getAuth,type Auth} from 'firebase-admin/auth';
 import {buildFirebaseApp} from '../../apps/firebase/api.js';
 import {Store} from '../../apps/firebase/store.js';
-import {dispatchAudit,processFirebaseTask} from '../../apps/firebase/worker.js';
+import {dispatchAudit,processFirebaseTask,recoverStalledTasks} from '../../apps/firebase/worker.js';
 import type {CloudProvider,Capture} from '../../apps/firebase/provider.js';
 
 test('Firebase emulator: cadastro -> termos -> auditoria -> 7º comprovado -> revisão -> PDF; isolamento e idempotência',{timeout:60000},async()=>{
@@ -53,6 +53,36 @@ test('Firebase emulator: cadastro -> termos -> auditoria -> 7º comprovado -> re
     assert.equal((await request('POST',`/v1/reports/${reportId}/review`,{})).statusCode,200);
     assert.equal((await request('POST',`/v1/reports/${reportId}/approve`,{})).statusCode,200);
     const pdf=await request('GET',`/v1/reports/${reportId}/pdf`);assert.equal(pdf.statusCode,200,pdf.body);assert.equal(pdf.rawPayload.subarray(0,5).toString(),'%PDF-');
+    // Cancelling queued work never calls a provider and settles its reservation once.
+    const cancelled=await request('POST',`/v1/locations/${location}/audits`,audit);
+    assert.equal(cancelled.statusCode,201,cancelled.body);const cancelledId=cancelled.json().data.runId;
+    assert.equal((await request('POST',`/v1/audits/${cancelledId}/cancel`,{reason:'Corrigir os termos antes de medir'})).statusCode,200);
+    const cancelledTask=(await store.list(org,'tasks')).find(t=>t.run_id===cancelledId)!;
+    await processFirebaseTask(store,provider,org,cancelledTask.id);await processFirebaseTask(store,provider,org,cancelledTask.id);
+    assert.equal(calls,2);assert.equal((await store.get(org,'audits',cancelledId)).status,'CANCELLED');
+    assert.equal((await store.ref(org,'measurements',cancelledTask.id).get()).exists,false);
+    const cancelledLedger=await store.get(org,'usage',cancelledId);assert.equal(cancelledLedger.reserved,0);assert.equal(cancelledLedger.units,0);assert.equal(cancelledLedger.state,'SETTLED');
+    // Cancellation after the first capture stops the independent second request.
+    const between=await request('POST',`/v1/locations/${location}/audits`,audit);const betweenId=between.json().data.runId;
+    const betweenTask=(await store.list(org,'tasks')).find(t=>t.run_id===betweenId)!;
+    const cancelBetween:CloudProvider={...provider,measure:async(q,key)=>{const captured=await provider.measure(q,key);await request('POST',`/v1/audits/${betweenId}/cancel`,{reason:'Cancelar durante a primeira captura'});return captured;}};
+    await processFirebaseTask(store,cancelBetween,org,betweenTask.id);
+    assert.equal(calls,3);const interruptedEvidence=await store.get(org,'evidence',betweenTask.id);
+    assert.ok(interruptedEvidence.first);assert.equal(interruptedEvidence.second,null);assert.equal(interruptedEvidence.decision.position,null);
+    assert.equal((await store.get(org,'audits',betweenId)).status,'CANCELLED');
+    assert.equal((await store.get(org,'usage',betweenId)).units,1);
+    // A stale, known-free local capture is closed without fabricating a position or retrying Chrome.
+    const freeApi=buildFirebaseApp({store,auth:elevated,provider:{...provider,id:'local_chrome_preview',maxCostMicros:0}});
+    try {
+      const free=await freeApi.inject({method:'POST',url:`/v1/locations/${location}/audits`,headers:{authorization:'Bearer '+token,'x-organization-id':org,'idempotency-key':randomUUID()},payload:{...audit,maxProviderBudgetUsdMicros:0}});
+      assert.equal(free.statusCode,201,free.body);const freeId=free.json().data.runId;
+      const stale=(await store.list(org,'tasks')).find(t=>t.run_id===freeId)!;
+      await store.ref(org,'tasks',stale.id).update({state:'RUNNING',lease:'interrupted-test',started_at:Timestamp.fromMillis(Date.now()-20*60000)});
+      await recoverStalledTasks(store,org);await recoverStalledTasks(store,org);
+      assert.equal(calls,3);const closed=await store.get(org,'measurements',stale.id);assert.equal(closed.status,'ERROR');assert.equal(closed.position,null);assert.equal(closed.failure_reason,'INTERRUPTED_LOCAL_CAPTURE');
+      assert.equal((await store.get(org,'audits',freeId)).status,'COMPLETED_WITH_WARNINGS');
+      assert.equal((await store.get(org,'usage',freeId)).state,'SETTLED');
+    } finally {await freeApi.close();}
     const ordinary=buildFirebaseApp({store,auth,provider});
     const previousMfaPolicy=process.env.REQUIRE_MFA_FOR_OPERATIONAL_WRITES;
     try {

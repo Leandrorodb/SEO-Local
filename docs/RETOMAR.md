@@ -1,7 +1,9 @@
-# Retomar após a pausa solicitada em 17/11/2026
+# Retomada autorizada em 18/11/2026
 
-O usuário pediu para parar e continuar de casa. Não reiniciar coleta ou fazer
-novos deploys sem a retomada do usuário. Site e API permanecem publicados.
+O usuário retomou o trabalho em 18/11. As correções e a validação atual estão em
+[VALIDACAO_2026-11-18.md](VALIDACAO_2026-11-18.md). A lista abaixo registra o
+checkpoint anterior; a fila antiga já foi cancelada e os termos incorretos
+desativados, com o histórico preservado. Site e API permanecem publicados.
 
 ## Estado observado
 

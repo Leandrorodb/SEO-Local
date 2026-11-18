@@ -3,14 +3,13 @@ name: Firebase Render Backend Validation
 on:
   push:
     branches: [desenvolvimento-gemini]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: firebase-render-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,3 +27,11 @@ jobs:
       - run: node --import tsx --test tests/firebase-provider.test.ts tests/firebase-chrome-provider.test.ts tests/firebase-collector-presence.test.ts tests/firebase-queue-provider.test.ts
       - run: npm run build:render
       - run: node --check dist/render/server.js
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test Firebase authorization, cancellation and recovery
+        env:
+          GCLOUD_PROJECT: demo-seo-local
+        run: npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-seo-local --config firebase.spark.json "node --import tsx --test tests/firebase/api.test.ts"

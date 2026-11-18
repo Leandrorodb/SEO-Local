@@ -105,10 +105,10 @@ export function QuickMeasure() {
     queryFn: () => api<AuditProgress>(`/audits/${runId}`, w.org),
     refetchInterval: (query) => {
       const state = query.state.data?.status;
-      return ['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED'].includes(state ?? '') ? false : 4000;
+      return ['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED', 'CANCELLED'].includes(state ?? '') ? false : 4000;
     },
   });
-  const finished = ['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED'].includes(progress.data?.status ?? '');
+  const finished = ['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'FAILED', 'CANCELLED'].includes(progress.data?.status ?? '');
   const results = useQuery({
     queryKey: ['quick-rankings', w.org, w.location, runId, progress.data?.status],
     enabled: w.signed && Boolean(runId && finished && w.location),
@@ -497,6 +497,8 @@ export function QuickMeasure() {
           <small>Identificador {runId}</small>
           {progress.data?.totals?.map((entry) => <span key={entry.state}>{entry.state}: {entry.count}</span>)}
           {progress.error && <p className="error">{errorText(progress.error)}</p>}
+          {!finished && progress.data?.status !== 'CANCELLING' && <button type="button" disabled={busy} onClick={()=>void run(()=>api(`/audits/${runId}/cancel`,w.org,{reason:'Cancelamento solicitado pelo operador'}),'Cancelamento solicitado. Nenhuma nova captura será iniciada.')}>Cancelar medição</button>}
+          {progress.data?.status === 'CANCELLING' && <p>Cancelamento em andamento. As capturas já iniciadas serão encerradas com o histórico preservado.</p>}
           {finished && <p>Execução encerrada. Confira os resultados e eventuais pesquisas inconclusivas.</p>}
         </div>}
       </>}
